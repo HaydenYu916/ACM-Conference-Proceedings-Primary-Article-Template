@@ -1,0 +1,130 @@
+\section{Design}
+\label{sec:design}
+\subsection{Policy-Aligned Compact Features}
+\label{sec:design-objective}
+The visual interface has a teacher path and a compressed student path
+during training. The teacher uses the original visual encoder and frozen
+policy on clean images to produce reference tokens and actions. The
+student path replaces visual processing with a compact tower, feature
+encoding, quantization, and feature decoding. Its recovered tokens enter
+the same policy interface. The policy weights remain fixed, but gradients
+propagate through the policy to update the trainable visual path.
+
+The objective combines three terms. The action term penalizes changes in
+policy behavior after compression. For $\pi_{0.5}$, training uses the
+frozen policy's flow-matching objective with targets derived from its own
+clean-input actions. For OpenVLA-OFT, the recorded action-distillation
+configuration uses an L1 loss on clean-policy action chunks. The token
+term aligns recovered tokens with the original visual representation
+using mean-squared error and cosine similarity. The rate term penalizes
+coding cost and is adjusted toward a target payload during
+training. These terms respectively constrain the downstream behavior,
+the intermediate representation, and the communication cost.
+
+The clean actions in this procedure are outputs of the original policy,
+not additional expert action annotations. Token supervision anchors the
+student to the original interface, while action supervision penalizes
+representation errors through their effect on the frozen policy. The two
+terms are complementary design constraints, rather than two independent
+deployment heads. Only the compressed path is needed at inference time.
+The rate penalty is a training objective; actual integer payloads are
+measured separately after entropy coding.
+
+\paragraph{Compact edge representation.}
+The primary $\pi_{0.5}$ path distills a SigLIP visual
+teacher~\cite{siglip}. In our implementation, the student has
+12 transformer layers with width 768 and approximately 87 million
+parameters, compared with 415 million parameters for the selected
+teacher configuration. A transformer feature encoder uses a
+256-dimensional bottleneck. The main configuration uses a
+five-level scalar quantizer with step size 4 and bound 8. All camera
+streams pass through the learned feature path; the main configuration
+does not substitute a JPEG stream for one of the cameras.
+
+\paragraph{Direct recovery of policy tokens.}
+A four-layer feature decoder with width 512 recovers 256 tokens of
+dimension 2,048 per camera in the $\pi_{0.5}$ configuration. These tokens
+replace the outputs of the original visual tower and its projection into
+the policy. Image reconstruction is absent from the deployed cloud path.
+The decoder is trained for the interface expected by the frozen policy,
+so its output is not intended as a general-purpose visual representation
+for unrelated consumers.
+
+\subsection{Decoder-Free Temporal Coding at the Edge}
+\label{sec:design-temporal}
+Successive uploads can contain repeated visual information. We exploit
+this redundancy with differential pulse-code modulation (DPCM) in the
+quantized feature representation. The prediction reference is the
+previous quantized code, which is retained at both endpoints. An intra
+upload establishes a reference; inter uploads encode a residual with
+respect to that reference. The primary $\pi_{0.5}$ configuration uses a
+group of pictures (GOP) of 16 uploads, and the OFT configuration uses a
+GOP of 8. These intervals refer to policy uploads rather than every
+camera capture or actuator step.
+
+The reference choice determines the local work. If prediction depended
+on the output of a neural reconstruction decoder, the edge would need
+to execute that decoder to reproduce the cloud's reference. Using the
+quantized code instead lets the sender maintain its reference without a
+neural decoding pass. The receiver first reverses entropy and temporal
+coding, then uses the recovered code as input to the feature decoder.
+Both endpoints retain the corresponding quantized reference for the
+next upload.
+
+This arrangement separates discrete stream correctness from model
+numerics. The entropy coder and temporal reconstruction must reproduce
+the transmitted quantized representation exactly; the recovered policy
+tokens are still a learned approximation to the original visual
+features. Likewise, identical entropy coding across ARM and x86 hosts
+does not imply that floating-point encoders on different devices always
+produce identical symbols for the same image.
+
+\paragraph{Integer bitstream.}
+We implement static rANS~\cite{ans} with a 32-bit state and integer
+frequency tables normalized to 15 bits. The decoder uses the matching
+tables to recover symbols. This supplies a concrete byte stream rather
+than relying only on the rate estimate used for training. Payload
+accounting must include the components actually needed by the selected
+deployment; application framing and network traffic are distinct from
+the codec payload.
+
+\paragraph{Temporal state.}
+Training rolls through intra and inter uploads to expose the codec to
+the reference states used by deployment. Streams must begin from a
+consistent reference and advance in the same order at both endpoints.
+Periodic intra coding limits the interval between reference refreshes,
+but it does not by itself establish packet-loss or reconnection
+robustness. Our measurements do not validate a general recovery protocol
+for corrupted or missing reference state.
+
+\subsection{Integration with Frozen VLA Backbones}
+\label{sec:design-integration}
+We adapt the feature interface to two backbones rather than imposing a
+single token format on both. For $\pi_{0.5}$, the recovered representation
+replaces SigLIP and its projection. OpenVLA uses visual features derived
+from DINOv2 and SigLIP~\cite{openvla,dinov2,siglip}; the OFT student and
+decoder are adapted to this dual-tower interface. The OFT student
+has width 1,024. Table~\ref{tab:interfaces} summarizes the scope of these
+adaptations.
+
+\begin{table}[t]
+\caption{Backbone-specific visual interfaces. Each codec is trained for
+its associated policy; policy weights remain frozen.}
+\label{tab:interfaces}
+\centering\small
+\begin{tabularx}{\columnwidth}{lXX}
+\toprule
+Backbone & Teacher visual path & Recovered representation \\
+\midrule
+$\pi_{0.5}$ & SigLIP and projection & Policy visual tokens \\
+OpenVLA-OFT & DINOv2 and SigLIP & Adapted dual-tower features \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The shared components are student-based encoding, a quantized temporal
+stream, and a cloud feature adapter. Their shapes and supervision are
+policy dependent. The action-distillation objective also follows the
+policy's action parameterization. This makes the approach adaptable to
+multiple interfaces, but not a zero-shot codec transferable between
+policies without retraining.

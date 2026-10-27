@@ -1,0 +1,129 @@
+\section{Additional Evaluation Context}
+\label{app:context}
+\subsection{Evaluation Units and Pairing}
+The main LIBERO comparison contains 2,000 episodes per method: four
+suites, ten tasks per suite, and 50 episodes per task. Outcomes are paired
+by initial state within the same evaluation framework and host. The
+success-rate difference is reported as method minus reference in
+percentage points. The paired confidence intervals and exact two-sided
+McNemar tests use the discordant outcomes, that is, episodes in which
+only one member of a pair succeeds. A test against the reference and a
+direct test between two compressed methods answer different questions;
+one method's significant difference from the reference does not establish
+a significant difference between the two methods.
+
+The 200-episode rANS deployment check is a separate sample, with 50
+episodes per suite. Its payload measurements are associated with the
+primary configuration but do not establish that all 2,000 success-rate
+episodes traversed the deployed entropy-coding path. Episode counts,
+payload samples, and upload timing samples therefore retain separate
+denominators throughout the evaluation.
+
+\subsection{Input Protocols and Evaluation Windows}
+The RoboCasa input protocol is part of the experiment definition.
+Native 224 rendering, unprocessed 256 rendering, and training-domain AV1
+processing produce different inputs to the same policy. Their reference
+success rates are not interchangeable. The comparison in
+Table~\ref{tab:robocasa} uses the training-domain protocol; the pooled
+reference and proposed-method result combines two batches, with
+comparisons matched within each batch and host.
+
+Each RoboCasa batch contains 24 tasks and 20 episodes per task. The first
+batch ran on A100 and the second on A40; their reference and proposed
+method counts were 291 versus 295 and 286 versus 275, respectively.
+The pooled 960-episode result combines the paired comparisons within
+these batches. It does not pair outcomes across hosts. In the first
+batch, the reference, SPARC, and H.264 clients shared a policy service,
+so matching initial states did not align the policy's random-number
+sequence for every invocation.
+
+OpenVLA-OFT results also belong to distinct evaluation windows. The
+initial complete window and the partial contemporaneous rerun are
+reported independently because the reference policy exhibited drift.
+A codec trained for another backbone is a transfer diagnostic rather
+than a policy-matched primary baseline.
+
+\subsection{Perturbation Breakdown}
+Table~\ref{tab:appendix-perturbations} gives the category counts behind
+the 700-episode LIBERO-Plus result. Each category contains 100 episodes.
+The proposed codec was trained on the original LIBERO observations.
+Its largest observed deficits relative to the reference were nine
+successes under camera-viewpoint changes and seven under background
+texture changes. The table describes where the observed deficit occurs;
+it does not isolate its cause. Individual category counts also do not
+establish a general robustness ranking across policies or perturbation
+distributions.
+
+\begin{table}[t]
+\caption{LIBERO-Plus successes by perturbation category. Each category
+has 100 paired episodes. The total row covers 700 episodes per method.}
+\label{tab:appendix-perturbations}
+\centering\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\columnwidth}{Xrrr}
+\toprule
+Perturbation & Reference & Ours & SPARC \\
+\midrule
+Camera viewpoint & 85 & 76 & 76 \\
+Background texture & 96 & 89 & 83 \\
+Language instruction & 93 & 89 & 92 \\
+Lighting & 94 & 96 & 83 \\
+Object layout & 84 & 85 & 83 \\
+Robot initial state & 78 & 76 & 67 \\
+Sensor noise & 80 & 79 & 74 \\
+\midrule
+Total & 610 & 590 & 558 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Measurement Scope}
+\label{app:measurement}
+\subsection{Payload Accounting}
+The LIBERO rANS subset yielded mean payloads of 1,857, 1,599, 2,035,
+and 1,787 bytes per upload for Spatial, Object, Goal, and Long,
+respectively. These measurements cover both camera streams. The
+reported summary is approximately 1.82\,kB per upload; its scope is
+codec payload rather than complete network traffic.
+
+For SO-101 replay, the reporting script averages the per-upload
+\texttt{payload\_bytes} field after warm-up. It divides values of at
+least 1,024 bytes by 1,024 for display. Table~\ref{tab:replay} labels
+these values as KiB and retains bytes for the smaller SPARC payloads.
+This unit convention is distinct from the simulation summaries.
+
+\subsection{Timing and Aggregation}
+The replay discards the first five of 200 uploads for each method,
+leaving 195 uploads. For each timing field, the reporting script sorts
+the available values and selects the element at the nearest integer
+index to the requested fraction of the zero-based index range. It does
+not interpolate between adjacent observations. With 195 valid values,
+p50 and p95 are the 98th and 185th sorted observations, respectively.
+These are empirical upload quantiles rather than confidence limits.
+
+Cloud-total time includes cloud decoding and policy computation; for
+image paths, it also includes the original visual encoder. Cloud
+decoding is therefore already included in cloud-total time. The network
+residual subtracts edge encoding and cloud-total time from the complete
+request duration, retaining transfer, response return, and serialization
+effects. It is not a separately timed one-way network delay.
+
+End-to-end quantiles are computed from complete request measurements.
+Summing stage medians would generally combine values from different
+uploads and does not recover the median request duration. Likewise,
+synchronized component microbenchmarks and the captured deployed path
+have different timing boundaries, as described in
+\S\ref{sec:implementation}.
+
+\subsection{Physical Interpretation}
+The replay experiment uses recorded observations without corresponding
+physical task execution. It can characterize request processing under
+the measured trace but cannot quantify recovery from an execution error,
+success under moving objects, or the age of an observation when a
+physical actuator applies the returned action.
+
+\section{Use of Generative Writing Assistance}
+Generative AI assisted in drafting and editing the manuscript text and
+in preparing an initial architecture illustration. The experimental
+results are drawn from the project's recorded summaries; the writing
+process did not generate or rerun those experiments.

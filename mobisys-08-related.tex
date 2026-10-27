@@ -1,0 +1,40 @@
+\section{Related Work}
+\label{sec:related}
+\paragraph{Task-aware visual communication.}
+Learned image compression jointly models a latent representation and its
+coding distribution; scale hyperpriors are a representative
+approach~\cite{hyperprior}. LimitNet studies progressive content-aware
+offloading for constrained devices and networks~\cite{limitnet}.
+For VLA policies, SPARC trains an image reconstruction path using action
+distortion, temporal masking, and a tilted rate penalty~\cite{sparc}.
+Our work shares the task-oriented objective but recovers policy features
+rather than images. Action awareness itself is not the distinguishing
+claim; the communication interface and its division of computation are.
+
+\paragraph{Collaborative inference and feature compression.}
+Neurosurgeon studies partitioning inference between a mobile device and
+the cloud~\cite{neurosurgeon}. BottleNet++ explicitly compresses
+intermediate features for device--edge inference~\cite{bottlenetpp}.
+RoboECC and RAPID extend collaborative deployment and partitioned
+inference to VLA models~\cite{roboecc,rapid}. Our contribution is not
+model splitting or activation transmission alone. We combine a compact policy-supervised visual path
+with quantized temporal state and a concrete entropy-coded interface;
+a controlled comparison with simple feature quantization remains part
+of the evaluation needed to attribute its gains.
+
+\paragraph{VLA interfaces and timely execution.}
+OpenVLA and $\pi_{0.5}$ provide the policy families underlying our
+implementation~\cite{openvla,pi05}. OpenVLA-OFT studies adaptation,
+continuous action prediction, and action chunking~\cite{openvlaoft}.
+Our method freezes the associated policy and changes its visual
+input path. Distillation supplies the general teacher--student
+principle~\cite{distillation}, while the per-policy visual interface
+determines what representation the receiver must reconstruct.
+
+ARIA studies inference across heterogeneous mobile
+processors~\cite{aria}, and TimelyLLM coordinates generation with
+physical agent execution~\cite{timelyllm}. Their settings reinforce
+the need to relate compute timing to application behavior. The current
+system uses existing asynchronous execution; its contribution concerns
+visual representation and transmission rather than a new scheduling
+algorithm.

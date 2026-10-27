@@ -1,0 +1,13 @@
+\section{Conclusion}
+\label{sec:conclusion}
+We presented a feature-streaming interface for edge--cloud VLA inference.
+A distilled edge tower and learned codec produce a quantized temporal
+bitstream, and the cloud recovers inputs to a frozen policy without
+first reconstructing images. Quantized reference state avoids a neural
+decoder on the robot. The available simulation and deployment-replay
+results show a useful quality--cost operating point for the primary
+configuration, while also exposing smaller-payload alternatives,
+distribution-shift losses, and deployment-dependent timing benefits.
+Further physical trials, matched feature-transfer baselines, and
+complete training and wire-level measurements are required to determine
+how broadly this interface improves robotic operation.

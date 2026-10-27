@@ -1,0 +1,50 @@
+\section{Implementation}
+\label{sec:implementation}
+\subsection{Edge and Cloud Runtime}
+The primary deployment runs the student visual tower and feature codec on
+a Jetson AGX Orin and the $\pi_{0.5}$ policy on an A40 cloud server.
+The robot-side pipeline prepares each camera input, executes the student
+and encoder, and serializes the entropy-coded payload. The server
+reconstructs visual tokens and supplies them through the frozen policy's
+visual-input interface. The integration uses asynchronous LeRobot
+inference; it changes the visual transport path rather than introducing
+a new action scheduler.
+
+In the recorded SO-101 component benchmark, two camera images are resized
+from $640\times480$ to $224\times168$ before the codec. This common resize
+is applied to every transport mode and is outside the reported codec
+timing boundary. The student and codec execute through a CUDA Graph in
+the deployed edge path. The compiled cloud $\pi_{0.5}$ implementation uses
+fixed buffers for visual-token injection.
+
+\subsection{Entropy Coding and Numeric Precision}
+The entropy implementation uses static integer tables at both endpoints.
+The deployment tests compare encoded symbols and byte streams across the
+edge and receiver, separating lossless coding from lossy representation
+learning. Floating-point precision remains part of the codec
+configuration: our diagnostics found that changing encoder
+precision between training and deployment could change quantization
+decisions. Precision must therefore be fixed together with the
+checkpoint rather than treated as an interchangeable runtime option.
+
+The component benchmark and deployed path use different synchronization
+boundaries. Timing each component with an explicit device synchronization
+includes overhead that is absent from a captured graph. We use the full
+deployed-path measurement for comparisons of complete encoding and keep
+the synchronized measurements as component diagnostics. They are not
+summed to estimate deployed latency.
+
+\subsection{Measurement Boundaries}
+The latency replay records edge encoding, cloud decoding, total cloud
+processing, and complete request latency. Its network column is computed
+as the remainder after subtracting edge and cloud processing from the
+request duration; it includes transfer, response return, and
+serialization effects. It is not an independent one-way network probe.
+
+For the replay, the first five of 200 uploads per method are discarded as
+warm-up, leaving 195 measurements. Quantiles are computed per upload.
+The measurements characterize a recorded visual sequence through the
+actual client and server. They do not represent 195 independent physical
+task trials. The replay table uses KiB because its generating script
+divides payload bytes by 1,024; simulation payload summaries are labeled
+separately to retain their original accounting.

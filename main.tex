@@ -1,0 +1,52 @@
+% Working manuscript, refined 2026-10-22. Author metadata is intentionally omitted.
+\documentclass[sigconf,10pt]{acmart}
+\setcopyright{none}
+\settopmatter{printacmref=false,printfolios=true}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\acmConference[MobiSys working draft]{MobiSys working draft}{}{}
+\acmDOI{}
+\acmISBN{}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\renewcommand{\shortauthors}{}
+\begin{document}
+\title{Policy-Aligned Feature Streaming for Efficient Edge--Cloud VLA Inference}
+\begin{abstract}
+Edge--cloud vision--language--action (VLA) inference must balance control
+quality, visual communication cost, and computation on the robot and
+server. Image compression reduces traffic but leaves image decoding and
+visual encoding in the cloud; moving the full visual encoder to the robot
+can instead make local computation expensive. We present a
+feature-streaming interface that combines a distilled edge visual tower,
+a learned codec, and direct recovery of a frozen policy's visual tokens.
+The original policy's clean-input actions and tokens supervise training
+alongside a rate objective. Temporal prediction uses quantized code
+references without a neural decoder on the robot, and integer rANS
+produces the transmitted bitstream.
+We implement the design for $\pi_{0.5}$ and adapt its visual interface to
+OpenVLA-OFT. In 2,000 paired LIBERO episodes, the primary configuration
+achieves 96.7\% success versus 96.9\% for the reference, with a paired
+difference of $-0.20$ percentage points and a 95\% confidence interval of
+$[-1.21,0.81]$. A separate rANS deployment subset yields a mean sampled
+payload of 1.82\,kB per upload. On recorded SO-101 observations replayed
+through an Orin-to-A40 deployment, median end-to-end latency is
+228.4\,ms versus 272.4\,ms for H.264 at a similar payload.
+These results support the interface under the tested conditions but do
+not establish physical closed-loop benefits, a complete cross-backbone
+comparison, or robustness under distribution shift.
+\end{abstract}
+\keywords{Vision-language-action models, edge-cloud inference, feature compression, robotic systems}
+\maketitle
+\input{mobisys-01-introduction}
+\input{mobisys-02-background}
+\input{mobisys-03-overview}
+\input{mobisys-04-design}
+\input{mobisys-05-implementation}
+\input{mobisys-06-evaluation}
+\input{mobisys-07-discussion}
+\input{mobisys-08-related}
+\input{mobisys-09-conclusion}
+\input{mobisys-references}
+\appendix
+\input{mobisys-appendix}
+\end{document}

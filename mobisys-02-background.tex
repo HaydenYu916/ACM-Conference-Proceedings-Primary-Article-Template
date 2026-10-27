@@ -1,0 +1,73 @@
+\section{Background and Motivation}
+\label{sec:background}
+\subsection{The Observation--Action Loop}
+A VLA policy consumes images, a language instruction, and any required
+robot state, and returns actions. In a policy that uses action chunks,
+one request produces several future control steps; OpenVLA-OFT explicitly
+uses action chunking in its fine-tuning recipe~\cite{openvlaoft}. The
+actuator control rate and the policy request rate therefore describe
+different parts of the system. Increasing the former does not imply
+that a fresh visual inference is performed at every control step.
+
+This distinction matters when evaluating an edge--cloud path. An upload
+can complete faster without improving a task if the returned action is
+not needed immediately, or if errors in the visual representation impair
+the next motion. Conversely, a delayed request can make its observation
+stale by the time the action is used. TimelyLLM studies the relationship
+between inference service and physical execution for agents~\cite{timelyllm}.
+Here we focus on the representation sent with visual policy requests.
+Our measured request latency ends when the action response returns; it
+does not by itself measure observation age at physical action application.
+
+\subsection{The Cost of Visual Communication}
+\label{sec:bg-cost}
+There are three relevant paths. Image offloading encodes pixels on the
+edge and reconstructs them before cloud visual inference. Conventional
+partitioning runs a model prefix locally and transmits intermediate
+activations. Our path learns a compact representation and a receiver
+that recovers policy input tokens. Table~\ref{tab:paths} summarizes these
+interfaces. Model splitting and feature compression are established
+ideas~\cite{neurosurgeon,bottlenetpp}; the question here is how to realize
+the feature interface for a frozen VLA on robot hardware.
+
+\begin{table}[t]
+\caption{Visual communication interfaces. The policy after visual-token
+construction is shared within each backbone comparison.}
+\label{tab:paths}
+\centering\small
+\begin{tabularx}{\columnwidth}{lXX}
+\toprule
+Path & Transmitted representation & Cloud visual work \\
+\midrule
+Image codec & Image/video bitstream & Image decoding and original visual encoder \\
+Model split & Intermediate activations & Remaining model computation \\
+Feature streaming & Quantized feature bitstream & Feature recovery and token injection \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The relevant cost includes edge preparation, transfer, and cloud
+processing. A method with fewer bytes can still have a longer request
+latency if encoding is expensive. A method with a more expensive encoder
+can be useful if it removes sufficient receiver work. These alternatives
+must be timed on the intended hardware. In particular, savings measured
+on one cloud GPU need not persist on another.
+
+\subsection{Why Policy Alignment Matters}
+\label{sec:bg-align}
+Image compression commonly trades rate against visual distortion;
+learned hyperprior codecs provide one example of this
+formulation~\cite{hyperprior}. A VLA introduces a different endpoint:
+the recovered observation must support the action policy. SPARC addresses
+this distinction with action distortion and a rate penalty
+rather than relying on image fidelity alone~\cite{sparc}. Our design
+retains the task-oriented endpoint while changing the receiver output
+from pixels to policy tokens.
+
+Our diagnostics also show that additional capacity or lower
+feature error cannot be interpreted in isolation. Changing an input
+preprocessing protocol changes the policy's reference performance, and
+perturbed camera views can expose a quality loss that is small on the
+original benchmark. We therefore report the input protocol, retain
+negative results, and measure closed-loop simulation success separately
+from feature reconstruction error and request latency.

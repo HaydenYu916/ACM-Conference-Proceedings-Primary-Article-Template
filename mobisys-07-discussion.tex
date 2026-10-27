@@ -1,0 +1,35 @@
+\section{Discussion and Limitations}
+\label{sec:limitations}
+\paragraph{The advantage depends on the operating point.}
+Direct token recovery removes receiver work but adds a student encoder
+and feature codec to the robot. Its usefulness depends on the hardware,
+network, and quality requirement. SPARC's smaller payload in the LIBERO
+comparison is a real alternative, and H.264 can have lower computation
+cost on a stronger cloud platform. The observed Orin-to-A40 latency
+reduction should therefore be read as a deployment result, not a claim
+that feature streaming dominates image transport everywhere. The
+recorded $\pi_{0.5}$ concurrency experiment improves throughput by only
+3--5\%, consistent with policy computation remaining a substantial cost
+after visual encoding is removed.
+
+\paragraph{Policy alignment is not a robustness guarantee.}
+Training against the original policy constrains behavior on the training
+distribution. It does not ensure that the recovered representation
+preserves unfamiliar observations. The LIBERO-Plus result exposes this
+boundary. An additional recorded Lego-policy diagnostic also gives
+greater offline action deviation for the learned path than for JPEG.
+Action deviation itself is not physical task success, but this negative
+result prevents generalizing favorable red-block diagnostics to every
+real-world policy. Adaptation to perturbed observations and prospective
+physical trials are needed to characterize this boundary.
+
+\paragraph{State and evaluation completeness.}
+Temporal prediction assumes a consistent discrete reference. Integer
+entropy coding verifies symbol recovery under that assumption; it does
+not establish a recovery protocol under message loss or restart. The
+codec is also trained separately for each policy interface, with a
+training cost not fully characterized by the present measurements.
+Finally, replay isolates a deployed inference path from physical
+execution. Establishing a control benefit requires task trials that
+record outcome and observation age together, with controlled resets
+and a predefined statistical protocol.
