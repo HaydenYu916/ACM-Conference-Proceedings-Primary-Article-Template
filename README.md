@@ -8,8 +8,8 @@
 | `mobisys-01` 至 `mobisys-09` | 当前正文九章 |
 | `mobisys-appendix.tex` | 当前附录 |
 | `mobisys-references.tex` | 当前参考文献 |
-| `images/` | 正文实际引用的三张图 |
-| `scripts/` | 结果图生成脚本 |
+| `images/` | 正文实际引用的图（文件名不带版本号） |
+| `scripts/` | 结果图生成脚本；`temporal-reference.tex` 是 4.3 示意图的 TikZ 源码 |
 | `archive/` | 旧稿、候选图、旧说明及原始 ACM 示例（如存在） |
 | `exports/` | 按日期保存的历史 PDF 和源码包，仅本地保留 |
 | `build/` | 本地编译产物和图片预览，不提交 GitHub |

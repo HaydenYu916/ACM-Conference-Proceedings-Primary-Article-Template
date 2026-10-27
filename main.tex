@@ -8,6 +8,10 @@
 \acmISBN{}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{xcolor}
+% Red text = written but not yet confirmed by the author. Change \unsure{...}
+% back to plain text once confirmed; none should remain at submission.
+\newcommand{\unsure}[1]{\textcolor{red}{#1}}
 \renewcommand{\shortauthors}{}
 \begin{document}
 \title{Policy-Aligned Feature Streaming for Efficient Edge--Cloud VLA Inference}

@@ -3,7 +3,7 @@
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{images/system-architecture-v1.png}
+  \includegraphics[width=\textwidth]{images/system-architecture.png}
   \caption{System overview (primary $\pi_{0.5}$ configuration).
   (a) Deployment: the robot turns camera images into an integer bitstream;
   the cloud recovers the policy's visual tokens from the bitstream and runs
@@ -46,7 +46,7 @@ policy's visual encoder. The frozen policy consumes these tokens together
 with the language instruction and robot state, which bypass the codec, and
 returns an action chunk.
 
-The design must solve four problems.
+The design must solve three problems.
 
 \paragraph{Preserving actions rather than appearance.}
 Faithful reconstruction of images or features does not guarantee that the
@@ -62,7 +62,7 @@ Running the policy's visual encoder at every upload adds substantial
 latency on resource-constrained robot hardware. The robot instead runs the
 distilled student tower, trained jointly with the codec, so its work is
 limited to the student tower, the feature encoder, and entropy coding
-(\S\ref{sec:design-objective}).
+(\S\ref{sec:design-frontend}).
 
 \paragraph{Temporal coding without a decoder on the robot.}
 Video codecs predict each frame from a reconstructed reference, so the
@@ -74,9 +74,6 @@ integer-only rANS to produce identical bitstreams from the same symbols
 and coding tables on ARM and x86 hosts
 (\S\ref{sec:design-temporal}).
 
-\paragraph{Adapting visual interfaces.}
-Backbones consume visual features in different forms: $\pi_{0.5}$ takes
-projected SigLIP tokens, whereas OpenVLA-OFT fuses features from two
-visual towers. The pipeline structure is shared; the student tower and
-feature decoder are adapted to each backbone's interface, and the codec is
-trained once per backbone (\S\ref{sec:design-integration}).
+The pipeline structure is shared across policies. Only the target
+interface and the form of the action term change, and each policy
+receives its own trained frontend (\S\ref{sec:impl-backbones}).

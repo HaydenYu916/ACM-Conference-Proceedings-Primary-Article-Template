@@ -1,130 +1,236 @@
 \section{Design}
 \label{sec:design}
-\subsection{Policy-Aligned Compact Features}
+This section presents the three components that address the challenges
+in \S\ref{sec:introduction}. Section~\ref{sec:design-frontend} defines a
+jointly learned visual frontend that keeps edge computation small,
+\S\ref{sec:design-objective} trains it against the frozen policy's own
+behavior, and \S\ref{sec:design-temporal} codes successive uploads without
+a neural decoder on the robot.
+
+\subsection{Jointly Learned Visual Frontend}
+\label{sec:design-frontend}
+We replace the image path of a frozen VLA policy with a learned visual
+frontend that maps camera images directly to the policy's visual tokens.
+This subsection first defines the interface that the frontend must
+reproduce, then describes the edge and cloud halves that realize it.
+
+\paragraph{Recovery target.}
+Let $x_t^{(c)}$ denote the image from camera $c$ at upload $t$. In the
+original policy, a visual encoder $T$ and a projection $P$ map each image
+to visual tokens
+\begin{equation}
+  z_t^{(c)} = P\big(T(x_t^{(c)})\big),
+  \label{eq:teacher_tokens}
+\end{equation}
+which the policy consumes together with the language instruction and the
+robot state to produce an action chunk. We refer to the boundary at which
+$z_t^{(c)}$ enters the policy as the policy visual-input interface. The
+frontend must produce recovered tokens $\hat{z}_t^{(c)}$ with the same
+shape and arrangement as $z_t^{(c)}$, and every policy weight after this
+interface remains frozen. In the primary $\pi_{0.5}$ configuration, $T$
+is the SigLIP tower~\cite{siglip}, and each camera contributes 256 tokens
+of dimension 2,048.
+
+\paragraph{Edge analysis transform.}
+Following the convention of learned compression, we treat all
+robot-side computation as a single analysis transform $g_a$ followed by
+scalar quantization $Q$:
+\begin{equation}
+  y_t^{(c)} = Q\big(g_a(x_t^{(c)})\big), \qquad g_a = h \circ s .
+  \label{eq:analysis}
+\end{equation}
+The transform has two stages. The direct choice for its first stage
+would be the original tower $T$ itself, but running $T$ on the robot at
+every upload is too slow for an edge device (\S\ref{sec:bg-cost}).
+We therefore use a student trunk $s$ with 12 transformer layers of width
+768 and about 85 million parameters, compared with 415 million for the
+teacher path $P \circ T$. A bottleneck head $h$, a small transformer,
+maps the trunk features to a 256-dimensional latent per token, and $Q$
+rounds each latent value to one of five levels with step size 4 and
+bound 8. Every camera stream passes through $g_a$; no camera is sent as
+an image.
+
+\paragraph{Cloud synthesis transform.}
+In the cloud, a synthesis transform $g_s$ with four transformer layers
+of width 512 maps the recovered codes to policy tokens,
+\begin{equation}
+  \hat{z}_t^{(c)} = g_s\big(y_t^{(c)}\big),
+  \label{eq:synthesis}
+\end{equation}
+which enter the policy in place of $P(T(\cdot))$. The cloud therefore
+runs neither an image decoder nor the original visual tower, and no
+image is reconstructed at any point in the deployed path. Because $g_s$
+targets one policy's interface, it is trained per policy.
+
+\paragraph{One trainable path.}
+The student trunk is initialized by distillation from the teacher path
+$P \circ T$, but it is not frozen afterwards. The trunk $s$, the head $h$, and the decoder $g_s$
+are updated together in every end-to-end training stage, with gradients
+passing through the frozen policy (\S\ref{sec:design-objective}). In
+the final LIBERO model, the trunk accounts for 85 million of the 105.2
+million trainable parameters. The trunk thus acts as the feature
+extractor of the codec rather than as a fixed copy of the teacher, in the
+same way that a learned image codec may initialize its analysis
+transform from a pretrained network before training the whole model.
+
+\paragraph{Across policies.}
+The structure of the frontend does not depend on the policy. What changes
+from one policy to another is the target interface, which sets the output
+shape of $g_s$, and the form of the action term, which follows the
+policy's action parameterization (\S\ref{sec:design-objective}). Each
+policy therefore receives its own trained frontend while its weights stay
+frozen. Section~\ref{sec:impl-backbones} gives the configurations for
+$\pi_{0.5}$ and OpenVLA-OFT.
+
+\subsection{Policy-Aligned Training}
 \label{sec:design-objective}
-The visual interface has a teacher path and a compressed student path
-during training. The teacher uses the original visual encoder and frozen
-policy on clean images to produce reference tokens and actions. The
-student path replaces visual processing with a compact tower, feature
-encoding, quantization, and feature decoding. Its recovered tokens enter
-the same policy interface. The policy weights remain fixed, but gradients
-propagate through the policy to update the trainable visual path.
+We train the frontend so that the frozen policy, when fed recovered
+tokens, behaves as it does on clean images, while the codes stay within
+a byte budget. This subsection describes the training objective and the
+staged schedule that introduces quantization and temporal coding.
 
-The objective combines three terms. The action term penalizes changes in
-policy behavior after compression. For $\pi_{0.5}$, training uses the
-frozen policy's flow-matching objective with targets derived from its own
-clean-input actions. For OpenVLA-OFT, the recorded action-distillation
-configuration uses an L1 loss on clean-policy action chunks. The token
-term aligns recovered tokens with the original visual representation
-using mean-squared error and cosine similarity. The rate term penalizes
-coding cost and is adjusted toward a target payload during
-training. These terms respectively constrain the downstream behavior,
-the intermediate representation, and the communication cost.
+\paragraph{Objective.}
+During training, a clean teacher path computes the reference tokens
+$z_t$ of Equation~\ref{eq:teacher_tokens} and the policy's behavior on
+them. The frontend parameters ($s$, $h$, $g_s$) are updated, and the
+policy weights stay frozen. The loss in Equation~\ref{eq:loss} combines three main terms with two
+auxiliary terms:
+\begin{equation}
+  \mathcal{L} = \mathcal{L}_{\mathrm{tok}} + \alpha\,\mathcal{L}_{\mathrm{act}}
+  + \rho(\tau)\big(\lambda\,\mathcal{L}_{\mathrm{rate}}
+  + \beta\,\mathcal{L}_{\mathrm{grp}}\big) + \mathcal{L}_{\mathrm{prior}} .
+  \label{eq:loss}
+\end{equation}
+The token term $\mathcal{L}_{\mathrm{tok}}$ is the mean-squared error
+between $\hat{z}_t$ and $z_t$, divided by the same error for tokens
+computed from random inputs; it anchors the recovered tokens to the
+policy's visual-input interface. The action term
+$\mathcal{L}_{\mathrm{act}}$ evaluates the frozen policy's
+flow-matching loss under $\hat{z}_t$, with targets taken from the
+policy's own actions on clean inputs, and normalizes it to the position
+between the losses obtained with clean tokens and with random tokens.
+The rate term $\mathcal{L}_{\mathrm{rate}}$ is the payload per upload
+estimated from the entropy model used by rANS. The two normalizations
+place $\mathcal{L}_{\mathrm{tok}}$ and $\mathcal{L}_{\mathrm{act}}$ on
+comparable scales, so their weights do not directly indicate their
+relative contribution to the gradient.
 
-The clean actions in this procedure are outputs of the original policy,
-not additional expert action annotations. Token supervision anchors the
-student to the original interface, while action supervision penalizes
-representation errors through their effect on the frozen policy. The two
-terms are complementary design constraints, rather than two independent
-deployment heads. Only the compressed path is needed at inference time.
-The rate penalty is a training objective; actual integer payloads are
-measured separately after entropy coding.
+\paragraph{Why an action term.}
+The direct objective would be the token term alone, which asks the
+recovered tokens to resemble the original ones and treats all deviations
+uniformly. Resemblance, however, does not guarantee the same behavior:
+some deviations leave the policy's output unchanged, whereas others alter
+it, and inputs that look close to the original can still change the
+policy's actions (\S\ref{sec:bg-align}). The action term weights reconstruction errors
+by their effect on the frozen policy's output, so the limited byte
+budget is spent on the visual information that the controller uses.
+The action targets are outputs of the original policy rather than
+additional expert annotations; training therefore requires no action
+labels.
+% EVIDENCE PLACEHOLDER (2026-10-27): the matched pi0.5 ablation that removes
+% the action term is not yet run. Do not claim a success-rate benefit of
+% L_act here; the evaluation section holds a placeholder for this ablation.
 
-\paragraph{Compact edge representation.}
-The primary $\pi_{0.5}$ path distills a SigLIP visual
-teacher~\cite{siglip}. In our implementation, the student has
-12 transformer layers with width 768 and approximately 87 million
-parameters, compared with 415 million parameters for the selected
-teacher configuration. A transformer feature encoder uses a
-256-dimensional bottleneck. The main configuration uses a
-five-level scalar quantizer with step size 4 and bound 8. All camera
-streams pass through the learned feature path; the main configuration
-does not substitute a JPEG stream for one of the cameras.
+\paragraph{Auxiliary terms.}
+The group term $\mathcal{L}_{\mathrm{grp}}$ applies an $\ell_2$ penalty
+to groups of latent coefficients, encouraging whole groups to become zero
+and therefore cheap to code. The prior term $\mathcal{L}_{\mathrm{prior}}$
+fits the entropy model to the empirical distribution of the quantized
+coefficients and updates only the entropy model. The ramp $\rho(\tau)$
+increases the rate and group weights over training step $\tau$.
+Section~\ref{sec:impl-backbones} lists the weights used for each policy.
 
-\paragraph{Direct recovery of policy tokens.}
-A four-layer feature decoder with width 512 recovers 256 tokens of
-dimension 2,048 per camera in the $\pi_{0.5}$ configuration. These tokens
-replace the outputs of the original visual tower and its projection into
-the policy. Image reconstruction is absent from the deployed cloud path.
-The decoder is trained for the interface expected by the frozen policy,
-so its output is not intended as a general-purpose visual representation
-for unrelated consumers.
+\paragraph{Staged schedule.}
+Training proceeds in three end-to-end stages, each initialized from the
+previous one. The student trunk is first initialized by distillation from
+the teacher path $P \circ T$. Stage S1 trains the whole frontend without
+quantization. Stage F1 adds quantization and the rate terms for intra
+uploads. Stage F2 adds temporal coding (\S\ref{sec:design-temporal}) and
+rolls through intra and inter uploads in the order used at deployment.
+The student trunk is updated in every stage. For OpenVLA-OFT, the action
+term instead uses an L1 loss on the clean policy's action chunks, matching
+that policy's action parameterization (\S\ref{sec:impl-backbones}).
 
 \subsection{Decoder-Free Temporal Coding at the Edge}
 \label{sec:design-temporal}
-Successive uploads can contain repeated visual information. We exploit
-this redundancy with differential pulse-code modulation (DPCM) in the
-quantized feature representation. The prediction reference is the
-previous quantized code, which is retained at both endpoints. An intra
-upload establishes a reference; inter uploads encode a residual with
-respect to that reference. The primary $\pi_{0.5}$ configuration uses a
-group of pictures (GOP) of 16 uploads, and the OFT configuration uses a
-GOP of 8. These intervals refer to policy uploads rather than every
-camera capture or actuator step.
+Consecutive uploads from the same camera overlap substantially, so each
+code can be predicted from the previous one. We exploit this redundancy with
+predictive coding in the space of quantized codes, and then convert the
+resulting integer symbols into a bitstream with rANS.
 
-The reference choice determines the local work. If prediction depended
-on the output of a neural reconstruction decoder, the edge would need
-to execute that decoder to reproduce the cloud's reference. Using the
-quantized code instead lets the sender maintain its reference without a
-neural decoding pass. The receiver first reverses entropy and temporal
-coding, then uses the recovered code as input to the feature decoder.
-Both endpoints retain the corresponding quantized reference for the
-next upload.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.8\columnwidth]{images/temporal-reference.pdf}
+  \caption{Predicting from the quantized code removes the neural decoder
+  from the robot. (a) Predicting from a
+  reconstructed reference requires a neural decoder on the robot at every
+  upload. (b) Predicting from the previous quantized code $y_{t-1}$ only
+  requires storing an integer copy, which the cloud also keeps.}
+  \Description{Two small block diagrams of the robot side. In (a), the
+  output of g_a minus a reference from a neural decoder is quantized and
+  entropy-coded; the coded output also feeds the decoder. In (b), g_a and
+  Q produce a code; the previous code y_{t-1}, stored after Q, is
+  subtracted before rANS. Neural modules are shaded orange and
+  non-neural modules blue.}
+  \label{fig:temporal-reference}
+\end{figure}
 
-This arrangement separates discrete stream correctness from model
-numerics. The entropy coder and temporal reconstruction must reproduce
-the transmitted quantized representation exactly; the recovered policy
-tokens are still a learned approximation to the original visual
-features. Likewise, identical entropy coding across ARM and x86 hosts
-does not imply that floating-point encoders on different devices always
-produce identical symbols for the same image.
+\paragraph{Prediction in the code domain.}
+We organize uploads into groups of pictures (GOPs) of $G$ uploads. The
+first upload of each GOP is an intra upload that transmits the code $y_t$
+of Equation~\ref{eq:analysis} directly. Every later upload is an inter upload that transmits only the
+residual against the code of the previous upload,
+\begin{equation}
+  r_t = y_t - y_{t-1}, \qquad y_t = y_{t-1} + r_t ,
+  \label{eq:dpcm}
+\end{equation}
+where the second identity is evaluated by the receiver. Because $y_t$
+and $y_{t-1}$ are integer codes, the residual is an integer and the
+receiver recovers $y_t$ exactly. The primary $\pi_{0.5}$ configuration
+uses $G=16$ and the OpenVLA-OFT configuration uses $G=8$. These
+intervals count policy uploads, not camera frames or actuator steps.
+
+\paragraph{Why the code is the reference.}
+Video codecs predict each frame from a reconstructed reference, so the
+encoder must also run the decoder
+(Figure~\ref{fig:temporal-reference}a). In our setting, a reconstructed
+reference would come from a neural decoder, which the robot would then
+have to execute at every upload. Floating-point differences between robot
+and cloud hardware could also make the two references diverge. Using the
+quantized code $y_{t-1}$ as the reference removes both problems. The robot keeps its reference by storing the
+code it has just sent, without any neural decoding, and both endpoints
+hold bit-identical references, so no drift accumulates within a GOP
+(Figure~\ref{fig:temporal-reference}b).
+The receiver inverts Equation~\ref{eq:dpcm} first and only then applies
+$g_s$ (Equation~\ref{eq:synthesis}).
+Training stage F2 (\S\ref{sec:design-objective}) rolls through intra and
+inter uploads in this order, so the frontend is trained under the same
+reference states it encounters at deployment.
 
 \paragraph{Integer bitstream.}
-We implement static rANS~\cite{ans} with a 32-bit state and integer
-frequency tables normalized to 15 bits. The decoder uses the matching
-tables to recover symbols. This supplies a concrete byte stream rather
-than relying only on the rate estimate used for training. Payload
-accounting must include the components actually needed by the selected
-deployment; application framing and network traffic are distinct from
-the codec payload.
+We entropy-code intra codes and inter residuals with static
+rANS~\cite{ans}, using a 32-bit state and integer frequency tables
+normalized to 15 bits. The coder performs no floating-point arithmetic,
+so the same symbols and tables produce byte-identical streams on ARM
+robot hardware and x86 servers. The rate term used in training is an
+estimate from the entropy model; the $\pi_{0.5}$ payloads reported in
+\S\ref{sec:evaluation} are measured from the actual rANS bytes.
 
-\paragraph{Temporal state.}
-Training rolls through intra and inter uploads to expose the codec to
-the reference states used by deployment. Streams must begin from a
-consistent reference and advance in the same order at both endpoints.
-Periodic intra coding limits the interval between reference refreshes,
-but it does not by itself establish packet-loss or reconnection
-robustness. Our measurements do not validate a general recovery protocol
-for corrupted or missing reference state.
+% MOVED OUT OF DESIGN (2026-10-27), to be placed in Sec. 5 or Sec. 7:
+% - Entropy coding and temporal reconstruction must reproduce the quantized
+%   representation exactly; recovered policy tokens remain a learned
+%   approximation of the original visual features.
+% - Identical entropy coding across ARM and x86 does not imply that
+%   floating-point encoders on different devices always produce identical
+%   symbols for the same image.
+% - Payload accounting must include components needed by the deployment;
+%   application framing and network traffic are distinct from codec payload.
+% - Streams must begin from a consistent reference and advance in the same
+%   order at both endpoints. Periodic intra coding limits the refresh
+%   interval but does not establish packet-loss or reconnection robustness;
+%   no general recovery protocol for corrupted or missing reference state
+%   is validated.
 
-\subsection{Integration with Frozen VLA Backbones}
-\label{sec:design-integration}
-We adapt the feature interface to two backbones rather than imposing a
-single token format on both. For $\pi_{0.5}$, the recovered representation
-replaces SigLIP and its projection. OpenVLA uses visual features derived
-from DINOv2 and SigLIP~\cite{openvla,dinov2,siglip}; the OFT student and
-decoder are adapted to this dual-tower interface. The OFT student
-has width 1,024. Table~\ref{tab:interfaces} summarizes the scope of these
-adaptations.
-
-\begin{table}[t]
-\caption{Backbone-specific visual interfaces. Each codec is trained for
-its associated policy; policy weights remain frozen.}
-\label{tab:interfaces}
-\centering\small
-\begin{tabularx}{\columnwidth}{lXX}
-\toprule
-Backbone & Teacher visual path & Recovered representation \\
-\midrule
-$\pi_{0.5}$ & SigLIP and projection & Policy visual tokens \\
-OpenVLA-OFT & DINOv2 and SigLIP & Adapted dual-tower features \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-The shared components are student-based encoding, a quantized temporal
-stream, and a cloud feature adapter. Their shapes and supervision are
-policy dependent. The action-distillation objective also follows the
-policy's action parameterization. This makes the approach adaptable to
-multiple interfaces, but not a zero-shot codec transferable between
-policies without retraining.
+% MOVED OUT OF DESIGN (2026-10-27), to be placed in Sec. 7:
+% - The approach is adaptable to multiple interfaces, but it is not a
+%   zero-shot codec transferable between policies without retraining.

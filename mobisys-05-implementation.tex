@@ -17,6 +17,43 @@ timing boundary. The student and codec execute through a CUDA Graph in
 the deployed edge path. The compiled cloud $\pi_{0.5}$ implementation uses
 fixed buffers for visual-token injection.
 
+\subsection{Backbone Configurations}
+\label{sec:impl-backbones}
+We instantiate the frontend for two policies whose visual interfaces
+differ (Table~\ref{tab:interfaces}). For $\pi_{0.5}$, $g_s$ recovers the
+projected SigLIP tokens~\cite{siglip}, 256 tokens of dimension 2,048 per
+camera, and replaces the original tower and projection. OpenVLA-OFT
+consumes features from two visual towers, DINOv2 and
+SigLIP~\cite{openvla,dinov2,siglip}, concatenated along the channel
+dimension into 2,176-dimensional features (1,024 + 1,152), 256 per
+camera. The student trunk, with 12 layers of width 1,024 and its own
+linear output layer to 2,176 dimensions, replaces both towers. As for
+$\pi_{0.5}$, \unsure{$g_s$ recovers the tokens after OFT's projection, so the
+cloud runs neither the visual towers nor the projection}.
+% TODO(author): add OFT g_s size. Figures must not merge the student's own
+% output layer with OFT's projection. The OFT action term uses
+an L1 loss on the clean policy's action chunks, and its GOP is 8 uploads.
+Each frontend is trained for its own policy, and the policy weights
+remain frozen in both cases. For $\pi_{0.5}$ on LIBERO, the loss weights in
+Equation~\ref{eq:loss} are $\alpha = 0.01745$, $\lambda = 0.001942$, and
+$\beta = 0.0105$.
+% TODO(author): add the OFT loss weights.
+
+\begin{table}[t]
+\caption{Visual interfaces of the two policies. Each frontend is trained
+for its associated policy; policy weights remain frozen.}
+\label{tab:interfaces}
+\centering\small
+\begin{tabularx}{\columnwidth}{lXX}
+\toprule
+Policy & Teacher visual path & Recovered representation \\
+\midrule
+$\pi_{0.5}$ & SigLIP and projection & Tokens after the projection \\
+OpenVLA-OFT & DINOv2, SigLIP and projection & \unsure{Tokens after the projection} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
 \subsection{Entropy Coding and Numeric Precision}
 The entropy implementation uses static integer tables at both endpoints.
 The deployment tests compare encoded symbols and byte streams across the
