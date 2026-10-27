@@ -1,0 +1,14 @@
+# Local build products and dated exports
+/build/
+/exports/
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+/main.pdf
+__pycache__/
+.DS_Store
+# Local historical material; already tracked remote archives remain tracked.
+/archive/
