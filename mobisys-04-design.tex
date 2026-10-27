@@ -160,18 +160,19 @@ resulting integer symbols into a bitstream with rANS.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.8\columnwidth]{images/temporal-reference.pdf}
+  \includegraphics[width=0.7\columnwidth]{images/temporal-reference.pdf}
   \caption{Predicting from the quantized code removes the neural decoder
   from the robot. (a) Predicting from a
   reconstructed reference requires a neural decoder on the robot at every
   upload. (b) Predicting from the previous quantized code $y_{t-1}$ only
-  requires storing an integer copy, which the cloud also keeps.}
-  \Description{Two small block diagrams of the robot side. In (a), the
-  output of g_a minus a reference from a neural decoder is quantized and
-  entropy-coded; the coded output also feeds the decoder. In (b), g_a and
-  Q produce a code; the previous code y_{t-1}, stored after Q, is
-  subtracted before rANS. Neural modules are shaded orange and
-  non-neural modules blue.}
+  requires storing an integer copy, which the cloud also keeps. Orange
+  boxes are neural modules; blue boxes are non-neural.}
+  \Description{Two small top-to-bottom block diagrams of the robot side,
+  side by side. In (a), a reference produced by a neural decoder is
+  subtracted from the output of g_a before Q and rANS; the quantized output
+  also feeds the decoder. In (b), g_a and Q produce a code; the previous
+  code y_{t-1}, stored after Q, is subtracted before rANS. Neural modules
+  are shaded orange and non-neural modules blue.}
   \label{fig:temporal-reference}
 \end{figure}
 
