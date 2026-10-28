@@ -21,21 +21,25 @@ We measured requests on our SO-101 deployment, in which a Jetson AGX Orin
 on the robot sends two camera views over a real link to an A40 server that
 runs $\pi_{0.5}$ (\S\ref{sec:implementation}).
 Figure~\ref{fig:request-breakdown} breaks the median request into its
-three parts for three ways of sending the images.
+parts for four ways of sending the images, including SPARC, a learned
+image codec for VLA policies~\cite{sparc}.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{images/request-breakdown.pdf}
   \caption{Smaller payloads stop shortening the request once cloud
-  computation dominates. Median edge, network, and cloud time per request
-  on the SO-101 deployment (Orin edge, A40 cloud, 195 uploads per method);
-  the label gives the median end-to-end latency, and the component medians
-  need not sum to it exactly.}
-  \Description{Horizontal stacked bars for three methods. Uncompressed
+  computation dominates. Median edge, network, cloud-decoding, and other
+  cloud time per request on the SO-101 deployment (Orin edge, A40 cloud,
+  195 uploads per method; SPARC in its faster all-GPU layout); the label
+  gives the median end-to-end latency, and the component medians need not
+  sum to it exactly.}
+  \Description{Horizontal stacked bars for four methods. Uncompressed
   images (220.5 KB): about 190 ms network and 203 ms cloud, 397 ms in
   total. JPEG q90 (15.2 KB): 58 ms network and 222 ms cloud, 282 ms in
   total. H.264 CRF30 (1.2 KB): 3 ms edge, 30 ms network and 240 ms cloud,
-  272 ms in total.}
+  of which 11 ms is decoding, 272 ms in total. SPARC (918 B): 89 ms edge,
+  30 ms network and 315 ms cloud, of which 89 ms is decoding, 434 ms in
+  total.}
   \label{fig:request-breakdown}
 \end{figure}
 
@@ -48,7 +52,12 @@ Second, cloud computation becomes the dominant cost, and image codecs add
 to it: cloud time rises from 203.2\,ms for uncompressed images to
 240.3\,ms for H.264, and the server must still decode each image
 (11.0\,ms for H.264) and run the original visual encoder before the
-policy.
+policy. A learned image codec makes both ends heavier: SPARC sends only
+918\,B, but its encoder takes 88.8\,ms on the Orin and its neural decoder
+88.5\,ms in the cloud, and the request takes 433.5\,ms, longer than with
+uncompressed images.
+% TODO(author): define SPARC's "official" vs. "all-GPU" layouts in Sec. 5/6
+% (official layout: 853.3 ms end to end; results/realrobot_latency_table.md).
 
 The obvious alternative is to move part or all of that encoder to the
 robot, as in split inference (Figure~\ref{fig:system-paths}b). In the
@@ -60,8 +69,8 @@ large intermediate features to send and the remaining layers to run in
 the cloud. A useful representation must therefore be
 cheap to produce on the robot, small on the network, and cheap to consume
 in the cloud at the same time. This motivates a jointly learned frontend
-that runs a compact student on the robot and lets the cloud skip its
-visual encoder (\S\ref{sec:design-frontend}). Because the balance between
+that runs a light vision encoder and a feature codec on the robot and lets
+the cloud skip its visual encoder (\S\ref{sec:design-frontend}). Because the balance between
 these costs depends on the hardware, all such savings must be measured on
 the intended edge and cloud devices.
 
