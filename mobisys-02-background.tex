@@ -84,28 +84,29 @@ the intended edge and cloud devices.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{images/pixel-vs-control.pdf}
-  \caption{Pixel fidelity is not control fidelity. On RoboCasa, H.264
-  frames at 3.0\,KB per upload look close to the originals, yet
-  $\pi_{0.5}$ succeeds in 0 of 480 episodes; the policy tokens computed
-  from them deviate most around the robot arm. Our frontend sends
-  1.14\,KB per upload, recovers tokens close to the clean ones, and
-  succeeds in 295 of 480 episodes (\unsure{291 for uncompressed frames passed through the AV1 pipeline used in the policy's training data}). Deviation is
-  $1-\cos$ between each post-projection policy token and its clean
-  counterpart, overlaid on a lightened copy of the original frame. The
-  upload shown has the median H.264 deviation in its episode; across all
-  24 uploads and three cameras of that episode, H.264 deviation averages
-  $4.0\times$ ours.}
-  \Description{Four square panels of a simulated kitchen with a robot arm.
-  The original frame and the H.264 frame look almost identical. A heatmap
-  of token deviation for H.264 is bright around the robot arm and at some
-  image borders, with mean 0.032. The same heatmap for our frontend is
-  almost dark, with mean 0.006.}
+  \caption{Pixel fidelity is not control fidelity. One upload of a RoboCasa
+  episode under four codecs: H.264 (CRF34) and JPEG (q20) keep about 33\,dB
+  PSNR, yet the $\pi_{0.5}$ tokens computed from them deviate strongly,
+  whereas SPARC has the lowest PSNR but much smaller deviation; our frontend
+  sends no image. Deviation is $1-\cos$ between each post-projection token
+  and its clean counterpart. Bytes and PSNR are for the upload shown;
+  success counts are from 480 paired episodes (\S\ref{sec:evaluation});
+  JPEG was not run in closed loop. Across 8 episodes (192 uploads), H.264
+  deviation averages $3.8\times$ ours ($3.4$--$4.5\times$).}
+  \Description{A two-row grid with five columns: original, H.264, JPEG,
+  SPARC and ours. The top row shows the decoded frames; H.264 (1.53 KB,
+  33.0 dB) and JPEG (8.84 KB, 32.8 dB) look like the original, SPARC
+  (0.91 KB, 26.4 dB) is blurrier, and ours sends no image. The bottom row
+  shows token-deviation heatmaps: H.264 (mean 0.032, 0 of 480 episodes) and
+  JPEG (mean 0.036) are bright around the robot arm and image borders;
+  SPARC (mean 0.009, 277 of 480) and ours (mean 0.006, 295 of 480) are
+  almost uniform.}
   \label{fig:pixel-vs-control}
 \end{figure}
 % Moved from the Introduction (2026-10-28); Figure 1 is now the
 % concept figure fig:system-paths.
-% TODO(author): replace the single-episode ratio (4.0x) with the held-out
-% 8-episode average once computed.
+% Data: paper_fig1/heat_fig1.npz, heat_fig1_more.npz (+ _summary.json),
+% heat_multi_summary.json (8 episodes); script scripts/pixel_vs_control.py.
 Image compression usually trades rate against visual distortion, as in
 learned hyperprior codecs~\cite{hyperprior}. A VLA policy has a different
 endpoint: the recovered observation must lead to the same actions. SPARC
@@ -124,7 +125,11 @@ difference from uncompressed images was no longer significant
 episodes, against 291 for \unsure{uncompressed frames passed through the
 AV1 pipeline used in the policy's training data} (\S\ref{sec:evaluation}), even though the decoded frames
 retained a PSNR of 31--34\,dB on average across cameras
-(Figure~\ref{fig:pixel-vs-control}). The policy is thus sensitive to
+(Figure~\ref{fig:pixel-vs-control}). Over the 24 uploads of the episode in
+Figure~\ref{fig:pixel-vs-control}, JPEG at q20 matches the PSNR of H.264
+(32.4 versus 32.2\,dB) with $5.0\times$ the bytes, yet its token
+deviation is the same (0.027 for both); SPARC has the lowest PSNR
+(26.0\,dB) but less than half the deviation (0.012). The policy is thus sensitive to
 distortions that pixel metrics rate as mild, and a payload that is
 small and visually faithful can still fail the controller. This motivates
 training the frontend against the frozen policy's own behavior rather than
