@@ -10,8 +10,10 @@
   1.14\,KB per upload, recovers tokens close to the clean ones, and
   succeeds in 295 of 480 episodes (uncompressed: 291). Deviation is
   $1-\cos$ between each post-projection policy token and its clean
-  counterpart, overlaid on the original frame; \unsure{the upload shown is
-  the one with median H.264 deviation in its episode}.}
+  counterpart, overlaid on a lightened copy of the original frame. The
+  upload shown has the median H.264 deviation in its episode; across all
+  24 uploads and three cameras of that episode, H.264 deviation averages
+  $4.0\times$ ours.}
   \Description{Four square panels of a simulated kitchen with a robot arm.
   The original frame and the H.264 frame look almost identical. A heatmap
   of token deviation for H.264 is bright around the robot arm and at some
@@ -19,8 +21,8 @@
   almost dark, with mean 0.006.}
   \label{fig:pixel-vs-control}
 \end{figure}
-% TODO(author): add the held-out average (8 episodes) of the H.264-to-ours
-% deviation ratio to the caption once computed.
+% TODO(author): replace the single-episode ratio (4.0x) with the held-out
+% 8-episode average once computed.
 
 A robot using a remotely hosted vision--language--action (VLA) policy must
 repeatedly send visual observations and receive actions while its physical
