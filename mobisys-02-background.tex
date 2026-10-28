@@ -13,9 +13,7 @@ action chunking in its fine-tuning recipe~\cite{openvlaoft}. The request
 rate and the actuator control rate are therefore distinct, and a faster
 request matters only insofar as the returned actions remain useful.
 TimelyLLM studies this relationship between inference service and
-physical execution~\cite{timelyllm}. Our request latency ends when the
-action response returns; it does not by itself measure how old an
-observation is when its actions are applied.
+physical execution~\cite{timelyllm}.
 
 \subsection{Where Does Request Time Go?}
 \label{sec:bg-cost}
@@ -41,16 +39,18 @@ three parts for three ways of sending the images.
   \label{fig:request-breakdown}
 \end{figure}
 
-Three observations follow. First, shrinking the payload quickly stops
-paying off. Moving from uncompressed images (220.5\,KB) to JPEG (15.2\,KB)
+Two observations show that a smaller payload alone is not enough.
+First, shrinking the payload quickly stops paying off. Moving from uncompressed images (220.5\,KB) to JPEG (15.2\,KB)
 cuts network time from 189.8 to 58.4\,ms, but moving on to H.264
 (1.2\,KB), with nearly $13\times$ fewer bytes, saves only another
 28.6\,ms, and end-to-end latency falls from 282.3 to just 272.4\,ms.
 Second, cloud computation becomes the dominant cost, and image codecs add
 to it: cloud time rises from 203.2\,ms for uncompressed images to
-240.3\,ms for H.264, because the server must decode each image
-(11.0\,ms for H.264) before running the original visual encoder and the
-policy. Third, moving that encoder to the robot instead is expensive:
+240.3\,ms for H.264, and the server must still decode each image
+(11.0\,ms for H.264) and run the original visual encoder before the
+policy.
+
+The obvious alternative, moving that encoder to the robot, is expensive:
 \unsure{running the original SigLIP tower on the Orin, together with a
 light bottleneck encoder, takes 39.9\,ms per two-camera upload}, compared
 with 2.9\,ms to encode H.264. A useful representation must therefore be

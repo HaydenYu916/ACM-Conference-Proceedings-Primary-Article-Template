@@ -76,7 +76,8 @@ The latency replay records edge encoding, cloud decoding, total cloud
 processing, and complete request latency. Its network column is computed
 as the remainder after subtracting edge and cloud processing from the
 request duration; it includes transfer, response return, and
-serialization effects. It is not an independent one-way network probe.
+serialization effects. It is not an independent one-way network probe. Request latency ends when the action response returns; it does not by
+itself measure how old an observation is when its actions are applied.
 
 For the replay, the first five of 200 uploads per method are discarded as
 warm-up, leaving 195 measurements. Quantiles are computed per upload.
