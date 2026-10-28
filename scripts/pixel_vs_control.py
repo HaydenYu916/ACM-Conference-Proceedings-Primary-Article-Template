@@ -38,7 +38,7 @@ plt.rcParams.update({"font.family": "sans-serif", "font.sans-serif": ["Helvetica
 # Full-width figure (figure*): two rows x five columns, colour bar on the far right.
 P, GAP = 0.94, 0.10
 LEFT = (7.0 - (0.30 + 5 * P + 4 * GAP + 0.62)) / 2 + 0.30
-FW, FH = 7.0, 0.20 + P + 0.30 + P + 0.34
+FW, FH = 7.0, 0.20 + P + 0.30 + P + 0.22
 TOP, ROWGAP = 0.20, 0.30                  # title space, space for labels under row 1
 def ax_at(xi, yi):                        # xi, yi: inches from left / top of the panel's top-left corner
     return fig.add_axes([xi / FW, 1 - (yi + P) / FH, P / FW, P / FH])
@@ -64,8 +64,8 @@ for i, (t, pix, dev, lab) in enumerate(cols):
         a0.text(0.5, -0.04, lab[0] if pix is None else f"{lab[0]} · {lab[1]}", transform=a0.transAxes,
                 ha="center", va="top", fontsize=7)
     if dev is not None:
-        a1.text(0.5, -0.04, f"mean {dev.mean():.3f}\n{lab[2]}", transform=a1.transAxes, ha="center",
-                va="top", fontsize=7, linespacing=1.1, color="#B8352A" if lab[2] == "0/480" else "#222222")
+        a1.text(0.5, -0.04, f"mean {dev.mean():.3f}", transform=a1.transAxes, ha="center",
+                va="top", fontsize=7)
 fig.text((LEFT - 0.22) / FW, 1 - (y_row1 + P / 2) / FH, "Pixels", rotation=90, ha="center", va="center", fontsize=8)
 fig.text((LEFT - 0.22) / FW, 1 - (y_row2 + P / 2) / FH, "Policy tokens", rotation=90, ha="center", va="center",
          fontsize=8)
