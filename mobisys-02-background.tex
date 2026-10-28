@@ -68,6 +68,31 @@ the intended edge and cloud devices.
 
 \subsection{Pixel Fidelity Is Not Control Fidelity}
 \label{sec:bg-align}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{images/pixel-vs-control.pdf}
+  \caption{Pixel fidelity is not control fidelity. On RoboCasa, H.264
+  frames at 3.0\,KB per upload look close to the originals, yet
+  $\pi_{0.5}$ succeeds in 0 of 480 episodes; the policy tokens computed
+  from them deviate most around the robot arm. Our frontend sends
+  1.14\,KB per upload, recovers tokens close to the clean ones, and
+  succeeds in 295 of 480 episodes (\unsure{291 for uncompressed frames passed through the AV1 pipeline used in the policy's training data}). Deviation is
+  $1-\cos$ between each post-projection policy token and its clean
+  counterpart, overlaid on a lightened copy of the original frame. The
+  upload shown has the median H.264 deviation in its episode; across all
+  24 uploads and three cameras of that episode, H.264 deviation averages
+  $4.0\times$ ours.}
+  \Description{Four square panels of a simulated kitchen with a robot arm.
+  The original frame and the H.264 frame look almost identical. A heatmap
+  of token deviation for H.264 is bright around the robot arm and at some
+  image borders, with mean 0.032. The same heatmap for our frontend is
+  almost dark, with mean 0.006.}
+  \label{fig:pixel-vs-control}
+\end{figure}
+% Moved from the Introduction (2026-10-28); Figure 1 is now the
+% concept figure fig:system-paths.
+% TODO(author): replace the single-episode ratio (4.0x) with the held-out
+% 8-episode average once computed.
 Image compression usually trades rate against visual distortion, as in
 learned hyperprior codecs~\cite{hyperprior}. A VLA policy has a different
 endpoint: the recovered observation must lead to the same actions. SPARC
@@ -83,8 +108,8 @@ long-horizon suite, with 450 versus 466 successes out of 500 ($p=0.029$).
 H.264 needed 3.50\,KB per upload, about $1.9\times$ the bytes, before the
 difference from uncompressed images was no longer significant
 ($p=0.30$). On RoboCasa, H.264 at 3.0\,KB per upload succeeded in none of 480
-episodes, against 291 for the uncompressed reference under the same
-protocol (\S\ref{sec:evaluation}), even though the decoded frames
+episodes, against 291 for \unsure{uncompressed frames passed through the
+AV1 pipeline used in the policy's training data} (\S\ref{sec:evaluation}), even though the decoded frames
 retained a PSNR of 31--34\,dB on average across cameras
 (Figure~\ref{fig:pixel-vs-control}). The policy is thus sensitive to
 distortions that pixel metrics rate as mild, and a payload that is

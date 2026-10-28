@@ -1,0 +1,35 @@
+<svg width="130" height="120" viewBox="0 0 130 120" xmlns="http://www.w3.org/2000/svg">
+<g stroke="#2B2F36" stroke-linejoin="round" stroke-linecap="round">
+  <!-- table plate + pedestal -->
+  <rect x="8" y="106" width="86" height="10" rx="3" fill="#C9CFD8" stroke-width="2"/>
+  <path d="M26 106 L30 88 H66 L70 106 Z" fill="#E6EAF0" stroke-width="2.2"/>
+  <rect x="34" y="80" width="28" height="10" rx="3" fill="#D3D9E2" stroke-width="2"/>
+  <!-- upper arm: outline, body, highlight -->
+  <path d="M48 76 L36 38" stroke-width="19"/>
+  <path d="M48 76 L36 38" stroke="#F4F6F9" stroke-width="14"/>
+  <path d="M43.5 72 L33 40" stroke="#FFFFFF" stroke-width="3" opacity="0.9"/>
+  <!-- forearm -->
+  <path d="M36 38 L86 26" stroke-width="15"/>
+  <path d="M36 38 L86 26" stroke="#F4F6F9" stroke-width="10.5"/>
+  <path d="M40 34.5 L84 24" stroke="#FFFFFF" stroke-width="2.4" opacity="0.9"/>
+  <!-- cable along the arm -->
+  <path d="M56 78 C 60 60, 48 48, 46 42 C 56 40, 70 38, 82 33" fill="none" stroke="#5B6472" stroke-width="1.4" opacity="0.7"/>
+  <!-- joints -->
+  <circle cx="48" cy="76" r="11.5" fill="#F4F6F9" stroke-width="2.2"/>
+  <circle cx="48" cy="76" r="5.5" fill="#8FA3BF" stroke-width="1.6"/>
+  <circle cx="36" cy="38" r="10" fill="#F4F6F9" stroke-width="2.2"/>
+  <circle cx="36" cy="38" r="4.6" fill="#8FA3BF" stroke-width="1.5"/>
+  <circle cx="86" cy="26" r="7.5" fill="#F4F6F9" stroke-width="2"/>
+  <circle cx="86" cy="26" r="3.2" fill="#8FA3BF" stroke-width="1.3"/>
+  <!-- wrist + flange -->
+  <path d="M90 27 L100 30" stroke-width="9"/>
+  <path d="M90 27 L100 30" stroke="#E6EAF0" stroke-width="5.5"/>
+  <rect x="99" y="20" width="7" height="22" rx="2" fill="#D3D9E2" stroke-width="1.8" transform="rotate(16 102.5 31)"/>
+  <!-- gripper fingers -->
+  <path d="M106 24 L118 26 L119 30 L107 29 Z" fill="#B9C2CE" stroke-width="1.6"/>
+  <path d="M103 36 L115 39 L114 43 L102 40 Z" fill="#B9C2CE" stroke-width="1.6"/>
+  <!-- wrist camera -->
+  <rect x="91" y="6" width="15" height="10" rx="2" fill="#3D4652" stroke-width="1.6" transform="rotate(16 98.5 11)"/>
+  <circle cx="99.5" cy="11.5" r="2.6" fill="#9FC4EE" stroke-width="1"/>
+</g>
+</svg>

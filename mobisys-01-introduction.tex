@@ -1,28 +1,34 @@
 \section{Introduction}
 \label{sec:introduction}
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\columnwidth]{images/pixel-vs-control.pdf}
-  \caption{Pixel fidelity is not control fidelity. On RoboCasa, H.264
-  frames at 3.0\,KB per upload look close to the originals, yet
-  $\pi_{0.5}$ succeeds in 0 of 480 episodes; the policy tokens computed
-  from them deviate most around the robot arm. Our frontend sends
-  1.14\,KB per upload, recovers tokens close to the clean ones, and
-  succeeds in 295 of 480 episodes (uncompressed: 291). Deviation is
-  $1-\cos$ between each post-projection policy token and its clean
-  counterpart, overlaid on a lightened copy of the original frame. The
-  upload shown has the median H.264 deviation in its episode; across all
-  24 uploads and three cameras of that episode, H.264 deviation averages
-  $4.0\times$ ours.}
-  \Description{Four square panels of a simulated kitchen with a robot arm.
-  The original frame and the H.264 frame look almost identical. A heatmap
-  of token deviation for H.264 is bright around the robot arm and at some
-  image borders, with mean 0.032. The same heatmap for our frontend is
-  almost dark, with mean 0.006.}
-  \label{fig:pixel-vs-control}
-\end{figure}
-% TODO(author): replace the single-episode ratio (4.0x) with the held-out
-% 8-episode average once computed.
+  \includegraphics[width=\textwidth]{images/system-paths.pdf}
+  \caption{Policy-aligned feature streaming keeps the edge light and the
+  uplink small, and lets the cloud skip its vision encoder.
+  (a)~Image offloading (H.264, JPEG, or learned image codecs such as
+  SPARC~\cite{sparc}) sends few bytes, but the cloud must decode the images
+  and re-run the vision encoder, and at low bitrate a standard codec can
+  break control: on RoboCasa, H.264 at 3.0\,KB per upload succeeds in 0 of
+  480 episodes (\S\ref{sec:bg-align}). (b)~Split inference runs the first
+  $k$ encoder layers on the edge, but uploads large intermediate features
+  and leaves encoder cost on both sides. (c)~Our jointly learned frontend,
+  a light vision encoder and a feature codec, is trained through the frozen
+  policy (dashed: action loss); the cloud's token decoder turns the codes
+  directly into the policy's visual tokens. Camera views are from one
+  RoboCasa episode.}
+  \Description{Three side-by-side panels, each with an edge box on the left,
+  a cloud box on the right, a robot arm below the edge box, and an action
+  chunk returning from the cloud to the robot. (a) An image encoder on the
+  edge sends compressed frames; the cloud runs an image decoder, a vision
+  encoder and the VLA policy. (b) The first layers of the vision encoder run
+  on the edge and the remaining layers in the cloud, joined by wavy cut
+  edges; intermediate features cross the network. (c) A jointly learned
+  frontend with a light vision encoder and a feature codec sends compact
+  codes; the cloud runs a token decoder and the VLA policy, and its vision
+  encoder is crossed out. A dashed line labelled action loss runs from the
+  policy back to the frontend.}
+  \label{fig:system-paths}
+\end{figure*}
 
 A robot using a remotely hosted vision--language--action (VLA) policy must
 repeatedly send visual observations and receive actions while its physical
@@ -45,7 +51,7 @@ action-aware image compression and temporal masking~\cite{sparc}.
 These approaches still recover images before the policy's visual
 processing. Image fidelity, however, is a poor proxy for what the policy needs:
 H.264 frames that look nearly unchanged can make the policy fail in every
-episode (Figure~\ref{fig:pixel-vs-control}). Collaborative inference systems instead choose where model
+episode (\S\ref{sec:bg-align}). Collaborative inference systems instead choose where model
 computation runs~\cite{neurosurgeon,roboecc,rapid}, while feature
 communication methods such as BottleNet++ compress intermediate
 representations~\cite{bottlenetpp}. For a robot, moving a full visual
@@ -53,6 +59,7 @@ encoder to the edge can trade network traffic for local computation.
 Consequently, a smaller payload alone does not establish a faster
 deployment, and the best division of work depends on the representation
 that crosses the network.
+Figure~\ref{fig:system-paths} contrasts these designs with ours.
 
 We study a visual communication interface that recovers the tokens
 consumed by a frozen VLA policy. A lightweight encoder on the robot
