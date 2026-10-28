@@ -4,18 +4,12 @@
   \centering
   \includegraphics[width=\textwidth]{images/system-paths.pdf}
   \caption{Policy-aligned feature streaming keeps the edge light and the
-  uplink small, and lets the cloud skip its vision encoder.
-  (a)~Image offloading (H.264, JPEG, or learned image codecs such as
-  SPARC~\cite{sparc}) sends few bytes, but the cloud must decode the images
-  and re-run the vision encoder, and at low bitrate a standard codec can
-  break control: on RoboCasa, H.264 at 3.0\,KB per upload succeeds in 0 of
-  480 episodes (\S\ref{sec:bg-align}). (b)~Split inference runs the first
-  $k$ encoder layers on the edge, but uploads large intermediate features
-  and leaves encoder cost on both sides. (c)~Our jointly learned frontend,
-  a light vision encoder and a feature codec, is trained through the frozen
-  policy (dashed: action loss); the cloud's token decoder turns the codes
-  directly into the policy's visual tokens. Camera views are from one
-  RoboCasa episode.}
+  uplink small, and lets the cloud skip its vision encoder. (a)~Image
+  offloading (H.264, JPEG, SPARC~\cite{sparc}) must decode images and re-run
+  the vision encoder in the cloud, and low bitrates can break control
+  (\S\ref{sec:bg-align}). (b)~Split inference uploads large intermediate
+  features. (c)~Our jointly learned frontend sends compact codes that the
+  cloud decodes directly into the frozen policy's visual tokens.}
   \Description{Three side-by-side panels, each with an edge box on the left,
   a cloud box on the right, a robot arm below the edge box, and an action
   chunk returning from the cloud to the robot. (a) An image encoder on the
