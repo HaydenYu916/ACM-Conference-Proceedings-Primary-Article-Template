@@ -81,9 +81,9 @@ the intended edge and cloud devices.
 
 \subsection{Pixel Fidelity Is Not Control Fidelity}
 \label{sec:bg-align}
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\columnwidth]{images/pixel-vs-control.pdf}
+  \includegraphics[width=\textwidth]{images/pixel-vs-control.pdf}
   \caption{Pixel fidelity is not control fidelity. One upload of a RoboCasa
   episode under four codecs: H.264 (CRF34) and JPEG (q20) keep about 33\,dB
   PSNR, yet the $\pi_{0.5}$ tokens computed from them deviate strongly,
@@ -91,8 +91,10 @@ the intended edge and cloud devices.
   sends no image. Deviation is $1-\cos$ between each post-projection token
   and its clean counterpart. Bytes and PSNR are for the upload shown;
   success counts are from 480 paired episodes (\S\ref{sec:evaluation});
-  JPEG was not run in closed loop. Across 8 episodes (192 uploads), H.264
-  deviation averages $3.8\times$ ours ($3.4$--$4.5\times$).}
+  JPEG was not run in closed loop. These are recorded dataset frames,
+  already AV1-compressed, on which H.264 at CRF34 needs 1.6\,KB per upload,
+  against 3.0\,KB on live renders in closed loop. Across 8 episodes (192
+  uploads), H.264 deviation averages $3.8\times$ ours ($3.4$--$4.5\times$).}
   \Description{A two-row grid with five columns: original, H.264, JPEG,
   SPARC and ours. The top row shows the decoded frames; H.264 (1.53 KB,
   33.0 dB) and JPEG (8.84 KB, 32.8 dB) look like the original, SPARC
@@ -102,7 +104,7 @@ the intended edge and cloud devices.
   SPARC (mean 0.009, 277 of 480) and ours (mean 0.006, 295 of 480) are
   almost uniform.}
   \label{fig:pixel-vs-control}
-\end{figure}
+\end{figure*}
 % Moved from the Introduction (2026-10-28); Figure 1 is now the
 % concept figure fig:system-paths.
 % Data: paper_fig1/heat_fig1.npz, heat_fig1_more.npz (+ _summary.json),
@@ -121,8 +123,8 @@ $[-2.11,-0.11]$, exact McNemar $p=0.035$). The loss concentrates on the
 long-horizon suite, with 450 versus 466 successes out of 500 ($p=0.029$).
 H.264 needed 3.50\,KB per upload, about $1.9\times$ the bytes, before the
 difference from uncompressed images was no longer significant
-($p=0.30$). On RoboCasa, H.264 at 3.0\,KB per upload succeeded in none of 480
-episodes, against 291 for \unsure{uncompressed frames passed through the
+($p=0.30$). On RoboCasa, H.264 at CRF34, averaging 3.0\,KB per upload in closed
+loop, succeeded in none of 480 episodes, against 291 for \unsure{uncompressed frames passed through the
 AV1 pipeline used in the policy's training data} (\S\ref{sec:evaluation}), even though the decoded frames
 retained a PSNR of 31--34\,dB on average across cameras
 (Figure~\ref{fig:pixel-vs-control}). Over the 24 uploads of the episode in

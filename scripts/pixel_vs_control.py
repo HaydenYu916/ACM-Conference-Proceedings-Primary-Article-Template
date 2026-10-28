@@ -34,40 +34,45 @@ cols = [  # title, pixels, deviation, label lines
      [f"{a['ours_bytes'][U]/1000:.2f} KB", "no image", "295/480"]),
 ]
 plt.rcParams.update({"font.family": "sans-serif", "font.sans-serif": ["Helvetica", "Arial", "DejaVu Sans"],
-                     "font.size": 6, "pdf.fonttype": 42})
-FW, FH = 3.33, 1.85
+                     "font.size": 7, "pdf.fonttype": 42})
+# Full-width figure (figure*): two rows x five columns, colour bar on the far right.
+P, GAP = 0.94, 0.10
+LEFT = (7.0 - (0.30 + 5 * P + 4 * GAP + 0.62)) / 2 + 0.30
+FW, FH = 7.0, 0.20 + P + 0.30 + P + 0.34
+TOP, ROWGAP = 0.20, 0.30                  # title space, space for labels under row 1
+def ax_at(xi, yi):                        # xi, yi: inches from left / top of the panel's top-left corner
+    return fig.add_axes([xi / FW, 1 - (yi + P) / FH, P / FW, P / FH])
 fig = plt.figure(figsize=(FW, FH))
-L, W, G = 0.075, 0.172, 0.012
-H = W * FW / FH                       # square panels
-y1, y2 = 0.600, 0.170                 # bottom of pixel row / token row
 blank = np.full((224, 224, 3), 0.95)
+y_row1, y_row2 = TOP, TOP + P + ROWGAP
 for i, (t, pix, dev, lab) in enumerate(cols):
-    x = L + i * (W + G)
-    a0 = fig.add_axes([x, y1, W, H]); a1 = fig.add_axes([x, y2, W, H])
+    x = LEFT + i * (P + GAP)
+    a0, a1 = ax_at(x, y_row1), ax_at(x, y_row2)
     a0.imshow(pix if pix is not None else blank)
     if pix is None:
         a0.text(0.5, 0.5, "no image\nsent", ha="center", va="center", transform=a0.transAxes,
-                fontsize=5.6, color="#666666")
+                fontsize=7, color="#666666")
     if dev is not None:
         a1.imshow(overlay(dev), interpolation="nearest")
     else:
         a1.axis("off")
     for ax in (a0, a1):
         ax.set_xticks([]); ax.set_yticks([])
-        for s_ in ax.spines.values(): s_.set_linewidth(0.4)
-    a0.set_title(t, fontsize=6.4, pad=1.5, weight="bold" if t == "Ours" else "normal")
+        for s_ in ax.spines.values(): s_.set_linewidth(0.5)
+    a0.set_title(t, fontsize=8, pad=2, weight="bold" if t == "Ours" else "normal")
     if lab[0]:
-        a0.text(0.5, -0.04, lab[0] if pix is None else f"{lab[0]}\n{lab[1]}", transform=a0.transAxes, ha="center", va="top",
-                fontsize=5.5, linespacing=1.1)
+        a0.text(0.5, -0.04, lab[0] if pix is None else f"{lab[0]} · {lab[1]}", transform=a0.transAxes,
+                ha="center", va="top", fontsize=7)
     if dev is not None:
-        a1.text(0.5, -0.04, f"mean {dev.mean():.3f}\n{lab[2]}", transform=a1.transAxes, ha="center", va="top",
-                fontsize=5.5, linespacing=1.1, color="#B8352A" if lab[2] == "0/480" else "#222222")
-fig.text(0.035, y1 + H / 2, "Pixels", rotation=90, ha="center", va="center", fontsize=6.2)
-fig.text(0.035, y2 + H / 2, "Policy tokens", rotation=90, ha="center", va="center", fontsize=6.2)
-cax = fig.add_axes([L + W * 0.45, y2 + 0.02, W * 0.12, H - 0.04])
+        a1.text(0.5, -0.04, f"mean {dev.mean():.3f}\n{lab[2]}", transform=a1.transAxes, ha="center",
+                va="top", fontsize=7, linespacing=1.1, color="#B8352A" if lab[2] == "0/480" else "#222222")
+fig.text((LEFT - 0.22) / FW, 1 - (y_row1 + P / 2) / FH, "Pixels", rotation=90, ha="center", va="center", fontsize=8)
+fig.text((LEFT - 0.22) / FW, 1 - (y_row2 + P / 2) / FH, "Policy tokens", rotation=90, ha="center", va="center",
+         fontsize=8)
+xc = LEFT + 5 * (P + GAP) + 0.02
+cax = fig.add_axes([xc / FW, 1 - (y_row2 + P) / FH, 0.10 / FW, P / FH])
 cb = fig.colorbar(ScalarMappable(Normalize(0, VMAX), cmap), cax=cax, ticks=[0, 0.05, 0.10])
-cb.ax.tick_params(labelsize=5.2, width=0.3, length=1.5, pad=1); cb.outline.set_linewidth(0.3)
-cax.yaxis.set_label_position("left")
-cb.set_label("1 $-$ cos", fontsize=5.6, labelpad=1.5)
+cb.ax.tick_params(labelsize=7, width=0.4, length=2, pad=1.5); cb.outline.set_linewidth(0.4)
+cb.set_label("1 $-$ cos", fontsize=7.5, labelpad=2)
 fig.savefig("pixel-vs-control.pdf")
-fig.savefig("pixel-vs-control.png", dpi=300)
+fig.savefig("pixel-vs-control.png", dpi=200)
