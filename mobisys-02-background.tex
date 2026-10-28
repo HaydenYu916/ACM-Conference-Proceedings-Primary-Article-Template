@@ -50,10 +50,14 @@ to it: cloud time rises from 203.2\,ms for uncompressed images to
 (11.0\,ms for H.264) and run the original visual encoder before the
 policy.
 
-The obvious alternative, moving that encoder to the robot, is expensive:
-\unsure{running the original SigLIP tower on the Orin, together with a
-light bottleneck encoder, takes 39.9\,ms per two-camera upload}, compared
-with 2.9\,ms to encode H.264. A useful representation must therefore be
+The obvious alternative is to move part or all of that encoder to the
+robot, as in split inference (Figure~\ref{fig:system-paths}b). In the
+limiting case where the whole encoder runs on the robot, this is
+expensive: \unsure{running the original SigLIP tower on the Orin, together
+with a light bottleneck encoder, takes 39.9\,ms per two-camera upload},
+compared with 2.9\,ms to encode H.264. Splitting earlier instead leaves
+large intermediate features to send and the remaining layers to run in
+the cloud. A useful representation must therefore be
 cheap to produce on the robot, small on the network, and cheap to consume
 in the cloud at the same time. This motivates a jointly learned frontend
 that runs a compact student on the robot and lets the cloud skip its

@@ -126,7 +126,10 @@ by their effect on the frozen policy's output, so the limited byte
 budget is spent on the visual information that the controller uses.
 The action targets are outputs of the original policy rather than
 additional expert annotations; training therefore requires no action
-labels.
+labels. This also separates the term from SPARC, which trains an image
+codec against demonstration actions~\cite{sparc}: our targets are the
+frozen policy's own outputs on clean inputs, and the loss acts on the
+recovered policy tokens rather than on reconstructed images.
 % EVIDENCE PLACEHOLDER (2026-10-27): the matched pi0.5 ablation that removes
 % the action term is not yet run. Do not claim a success-rate benefit of
 % L_act here; the evaluation section holds a placeholder for this ablation.
