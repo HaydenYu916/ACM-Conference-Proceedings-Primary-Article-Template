@@ -1,5 +1,27 @@
 \section{Introduction}
 \label{sec:introduction}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{images/pixel-vs-control.pdf}
+  \caption{Pixel fidelity is not control fidelity. On RoboCasa, H.264
+  frames at 3.0\,KB per upload look close to the originals, yet
+  $\pi_{0.5}$ succeeds in 0 of 480 episodes; the policy tokens computed
+  from them deviate most around the robot arm. Our frontend sends
+  1.14\,KB per upload, recovers tokens close to the clean ones, and
+  succeeds in 295 of 480 episodes (uncompressed: 291). Deviation is
+  $1-\cos$ between each post-projection policy token and its clean
+  counterpart, overlaid on the original frame; \unsure{the upload shown is
+  the one with median H.264 deviation in its episode}.}
+  \Description{Four square panels of a simulated kitchen with a robot arm.
+  The original frame and the H.264 frame look almost identical. A heatmap
+  of token deviation for H.264 is bright around the robot arm and at some
+  image borders, with mean 0.032. The same heatmap for our frontend is
+  almost dark, with mean 0.006.}
+  \label{fig:pixel-vs-control}
+\end{figure}
+% TODO(author): add the held-out average (8 episodes) of the H.264-to-ours
+% deviation ratio to the caption once computed.
+
 A robot using a remotely hosted vision--language--action (VLA) policy must
 repeatedly send visual observations and receive actions while its physical
 state continues to change. Models such as $\pi_{0.5}$ and OpenVLA use
@@ -19,7 +41,9 @@ vision offloading under constrained device and network
 resources~\cite{limitnet}. SPARC goes further for VLA policies by using
 action-aware image compression and temporal masking~\cite{sparc}.
 These approaches still recover images before the policy's visual
-processing. Collaborative inference systems instead choose where model
+processing. Image fidelity, however, is a poor proxy for what the policy needs:
+H.264 frames that look nearly unchanged can make the policy fail in every
+episode (Figure~\ref{fig:pixel-vs-control}). Collaborative inference systems instead choose where model
 computation runs~\cite{neurosurgeon,roboecc,rapid}, while feature
 communication methods such as BottleNet++ compress intermediate
 representations~\cite{bottlenetpp}. For a robot, moving a full visual

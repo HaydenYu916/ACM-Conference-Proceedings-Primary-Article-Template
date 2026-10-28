@@ -82,10 +82,11 @@ $[-2.11,-0.11]$, exact McNemar $p=0.035$). The loss concentrates on the
 long-horizon suite, with 450 versus 466 successes out of 500 ($p=0.029$).
 H.264 needed 3.50\,KB per upload, about $1.9\times$ the bytes, before the
 difference from uncompressed images was no longer significant
-($p=0.30$). On RoboCasa, H.264 at 1.1\,KB per upload succeeded in only 4
-of 480 episodes, against 291 for the uncompressed reference under the
-same protocol (\S\ref{sec:evaluation}), even though the decoded frames
-retained a PSNR of 30--33\,dB. The policy is thus sensitive to
+($p=0.30$). On RoboCasa, H.264 at 3.0\,KB per upload succeeded in none of 480
+episodes, against 291 for the uncompressed reference under the same
+protocol (\S\ref{sec:evaluation}), even though the decoded frames
+retained a PSNR of 31--34\,dB on average across cameras
+(Figure~\ref{fig:pixel-vs-control}). The policy is thus sensitive to
 distortions that pixel metrics rate as mild, and a payload that is
 small and visually faithful can still fail the controller. This motivates
 training the frontend against the frozen policy's own behavior rather than
