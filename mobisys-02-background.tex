@@ -1,73 +1,102 @@
 \section{Background and Motivation}
 \label{sec:background}
-\subsection{The Observation--Action Loop}
-A VLA policy consumes images, a language instruction, and any required
-robot state, and returns actions. In a policy that uses action chunks,
-one request produces several future control steps; OpenVLA-OFT explicitly
-uses action chunking in its fine-tuning recipe~\cite{openvlaoft}. The
-actuator control rate and the policy request rate therefore describe
-different parts of the system. Increasing the former does not imply
-that a fresh visual inference is performed at every control step.
+This section first describes the cost of one policy request in an
+edge--cloud deployment, then measures where that cost goes on our robot,
+and finally shows why image fidelity is a poor proxy for control quality.
 
-This distinction matters when evaluating an edge--cloud path. An upload
-can complete faster without improving a task if the returned action is
-not needed immediately, or if errors in the visual representation impair
-the next motion. Conversely, a delayed request can make its observation
-stale by the time the action is used. TimelyLLM studies the relationship
-between inference service and physical execution for agents~\cite{timelyllm}.
-Here we focus on the representation sent with visual policy requests.
-Our measured request latency ends when the action response returns; it
-does not by itself measure observation age at physical action application.
+\subsection{Edge--Cloud VLA Requests}
+\label{sec:bg-loop}
+A VLA policy takes camera images, a language instruction, and the robot
+state, and returns actions. When the policy runs in the cloud, every
+request incurs three costs: edge computation to prepare the visual
+payload, network transfer, and cloud computation, which includes any
+decoding, the policy's visual encoder, and the rest of the policy. We call
+their sum the request latency. Policies that output action chunks produce
+several future control steps per request; OpenVLA-OFT, for example, uses
+action chunking in its fine-tuning recipe~\cite{openvlaoft}. The request
+rate and the actuator control rate are therefore distinct, and a faster
+request matters only insofar as the returned actions remain useful.
+TimelyLLM studies this relationship between inference service and
+physical execution~\cite{timelyllm}. Our request latency ends when the
+action response returns; it does not by itself measure how old an
+observation is when its actions are applied.
 
-\subsection{The Cost of Visual Communication}
+\subsection{Where Does Request Time Go?}
 \label{sec:bg-cost}
-There are three relevant paths. Image offloading encodes pixels on the
-edge and reconstructs them before cloud visual inference. Conventional
-partitioning runs a model prefix locally and transmits intermediate
-activations. Our path learns a compact representation and a receiver
-that recovers policy input tokens. Table~\ref{tab:paths} summarizes these
-interfaces. Model splitting and feature compression are established
-ideas~\cite{neurosurgeon,bottlenetpp}; the question here is how to realize
-the feature interface for a frozen VLA on robot hardware.
+We measured requests on our SO-101 deployment, in which a Jetson AGX Orin
+on the robot sends two camera views over a real link to an A40 server that
+runs $\pi_{0.5}$ (\S\ref{sec:implementation}).
+Figure~\ref{fig:request-breakdown} breaks the median request into its
+three parts for three ways of sending the images.
 
-\begin{table}[t]
-\caption{Visual communication interfaces. The policy after visual-token
-construction is shared within each backbone comparison.}
-\label{tab:paths}
-\centering\small
-\begin{tabularx}{\columnwidth}{lXX}
-\toprule
-Path & Transmitted representation & Cloud visual work \\
-\midrule
-Image codec & Image/video bitstream & Image decoding and original visual encoder \\
-Model split & Intermediate activations & Remaining model computation \\
-Feature streaming & Quantized feature bitstream & Feature recovery and token injection \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{images/request-breakdown.pdf}
+  \caption{Smaller payloads stop shortening the request once cloud
+  computation dominates. Median edge, network, and cloud time per request
+  on the SO-101 deployment (Orin edge, A40 cloud, 195 uploads per method);
+  the label gives the median end-to-end latency, and the component medians
+  need not sum to it exactly.}
+  \Description{Horizontal stacked bars for three methods. Uncompressed
+  images (220.5 KB): about 190 ms network and 203 ms cloud, 397 ms in
+  total. JPEG q90 (15.2 KB): 58 ms network and 222 ms cloud, 282 ms in
+  total. H.264 CRF30 (1.2 KB): 3 ms edge, 30 ms network and 240 ms cloud,
+  272 ms in total.}
+  \label{fig:request-breakdown}
+\end{figure}
 
-The relevant cost includes edge preparation, transfer, and cloud
-processing. A method with fewer bytes can still have a longer request
-latency if encoding is expensive. A method with a more expensive encoder
-can be useful if it removes sufficient receiver work. These alternatives
-must be timed on the intended hardware. In particular, savings measured
-on one cloud GPU need not persist on another.
+Three observations follow. First, shrinking the payload quickly stops
+paying off. Moving from uncompressed images (220.5\,KB) to JPEG (15.2\,KB)
+cuts network time from 189.8 to 58.4\,ms, but moving on to H.264
+(1.2\,KB), with nearly $13\times$ fewer bytes, saves only another
+28.6\,ms, and end-to-end latency falls from 282.3 to just 272.4\,ms.
+Second, cloud computation becomes the dominant cost, and image codecs add
+to it: cloud time rises from 203.2\,ms for uncompressed images to
+240.3\,ms for H.264, because the server must decode each image
+(11.0\,ms for H.264) before running the original visual encoder and the
+policy. Third, moving that encoder to the robot instead is expensive:
+\unsure{running the original SigLIP tower on the Orin, together with a
+light bottleneck encoder, takes 39.9\,ms per two-camera upload}, compared
+with 2.9\,ms to encode H.264. A useful representation must therefore be
+cheap to produce on the robot, small on the network, and cheap to consume
+in the cloud at the same time. This motivates a jointly learned frontend
+that runs a compact student on the robot and lets the cloud skip its
+visual encoder (\S\ref{sec:design-frontend}). Because the balance between
+these costs depends on the hardware, all such savings must be measured on
+the intended edge and cloud devices.
 
-\subsection{Why Policy Alignment Matters}
+% REMOVED (2026-10-28): qualitative table of three communication paths
+% (image codec / model split / feature streaming), replaced by the
+% measurement figure above. Restore from
+% archive/drafts/mobisys-02-background.before-rewrite-2026-10-28.tex if wanted.
+
+\subsection{Pixel Fidelity Is Not Control Fidelity}
 \label{sec:bg-align}
-Image compression commonly trades rate against visual distortion;
-learned hyperprior codecs provide one example of this
-formulation~\cite{hyperprior}. A VLA introduces a different endpoint:
-the recovered observation must support the action policy. SPARC addresses
-this distinction with action distortion and a rate penalty
-rather than relying on image fidelity alone~\cite{sparc}. Our design
-retains the task-oriented endpoint while changing the receiver output
-from pixels to policy tokens.
+Image compression usually trades rate against visual distortion, as in
+learned hyperprior codecs~\cite{hyperprior}. A VLA policy has a different
+endpoint: the recovered observation must lead to the same actions. SPARC
+recognizes this by training an image codec with an action distortion and
+a rate penalty~\cite{sparc}. Our measurements show how far pixel fidelity
+and control quality can diverge.
 
-Our diagnostics also show that additional capacity or lower
-feature error cannot be interpreted in isolation. Changing an input
-preprocessing protocol changes the policy's reference performance, and
-perturbed camera views can expose a quality loss that is small on the
-original benchmark. We therefore report the input protocol, retain
-negative results, and measure closed-loop simulation success separately
-from feature reconstruction error and request latency.
+On 2,000 LIBERO episodes paired by initial state, H.264 at 1.74\,KB per
+upload succeeded in 1,916 episodes, against 1,938 for uncompressed images:
+a paired difference of $-1.10$ percentage points (95\% CI
+$[-2.11,-0.11]$, exact McNemar $p=0.035$). The loss concentrates on the
+long-horizon suite, with 450 versus 466 successes out of 500 ($p=0.029$).
+H.264 needed 3.50\,KB per upload, about $1.9\times$ the bytes, before the
+difference from uncompressed images was no longer significant
+($p=0.30$). On RoboCasa, H.264 at 1.1\,KB per upload succeeded in only 4
+of 480 episodes, against 291 for the uncompressed reference under the
+same protocol (\S\ref{sec:evaluation}), even though the decoded frames
+retained a PSNR of 30--33\,dB. The policy is thus sensitive to
+distortions that pixel metrics rate as mild, and a payload that is
+small and visually faithful can still fail the controller. This motivates
+training the frontend against the frozen policy's own behavior rather than
+against image fidelity (\S\ref{sec:design-objective}).
+
+% MOVED (2026-10-28) to Sec. 6 setup: input preprocessing changes the
+% policy's reference performance; perturbed views expose losses small on
+% the original benchmark; we report the input protocol, keep negative
+% results, and measure closed-loop success separately from feature error
+% and request latency.

@@ -8,6 +8,15 @@ replayed through the real client and cloud stack. Physical closed-loop
 task success has not yet been measured in this deployment.
 
 \subsection{Setup and Statistical Protocol}
+% MOVED FROM SEC. 2 (2026-10-28), to be integrated into this setup text:
+% Our diagnostics also show that additional capacity or lower feature error
+% cannot be interpreted in isolation. Changing an input preprocessing
+% protocol changes the policy's reference performance, and perturbed camera
+% views can expose a quality loss that is small on the original benchmark.
+% We therefore report the input protocol, retain negative results, and
+% measure closed-loop simulation success separately from feature
+% reconstruction error and request latency.
+
 \paragraph{Benchmarks.}
 LIBERO~\cite{libero} evaluation covers the Spatial, Object, Goal, and Long
 suites, with ten evaluated tasks and 50 episodes per task in each suite,
