@@ -37,23 +37,28 @@ concrete: an Orin device processes camera inputs while an A40 server
 hosts the policy. Work added to either side recurs with each new visual
 request.
 
-Image offloading and model partitioning address different parts of this
-cost. Progressive image transmission, exemplified by LimitNet, targets
-vision offloading under constrained device and network
-resources~\cite{limitnet}. SPARC goes further for VLA policies by using
-action-aware image compression and temporal masking~\cite{sparc}.
-These approaches still recover images before the policy's visual
-processing. Image fidelity, however, is a poor proxy for what the policy needs:
-H.264 frames that look nearly unchanged can make the policy fail in every
-episode (\S\ref{sec:bg-align}). Collaborative inference systems instead choose where model
-computation runs~\cite{neurosurgeon,roboecc,rapid}, while feature
-communication methods such as BottleNet++ compress intermediate
-representations~\cite{bottlenetpp}. For a robot, moving a full visual
-encoder to the edge can trade network traffic for local computation.
-Consequently, a smaller payload alone does not establish a faster
-deployment, and the best division of work depends on the representation
-that crosses the network.
-Figure~\ref{fig:system-paths} contrasts these designs with ours.
+Existing systems take one of two paths
+(Figure~\ref{fig:system-paths}a,b). The first offloads images. Standard
+codecs such as H.264 and progressive schemes such as
+LimitNet~\cite{limitnet} shrink the upload, and SPARC trains a learned
+image codec for VLA policies with an action-aware objective~\cite{sparc}.
+All of them, however, recover images in the cloud, so every request still
+pays for image decoding and for the policy's full vision encoder. Image
+fidelity is also a poor proxy for what the policy needs: H.264 frames
+that look nearly unchanged can make the policy fail in every episode
+(\S\ref{sec:bg-align}).
+% TODO(author, 2026-10-28): add the measured cost of decoding back to
+% images: SPARC (all-GPU) cloud decode 88.5 ms, cloud stage 314.7 ms vs.
+% 184.3 ms for ours (results/realrobot_latency_table.md); full split in Sec. 6.
+The second path partitions the model: collaborative inference systems
+choose where layers run~\cite{neurosurgeon,roboecc,rapid}, and
+feature-communication methods such as BottleNet++ compress the
+intermediate representation~\cite{bottlenetpp}. On a robot, however,
+running the encoder's early layers locally trades network traffic for
+edge computation, and the intermediate features of a VLA vision encoder
+are large. A smaller payload alone therefore does not make a deployment
+faster; what matters is which representation crosses the network and how
+much work it leaves on each side.
 
 We study a visual communication interface that recovers the tokens
 consumed by a frozen VLA policy. A lightweight encoder on the robot
