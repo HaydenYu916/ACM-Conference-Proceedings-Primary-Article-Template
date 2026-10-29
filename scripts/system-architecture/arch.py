@@ -85,18 +85,24 @@ mid = (r1 + r2) // 2
 out.append(f'<img src="data:image/jpeg;base64,{TH["cam0"]}" style="position:absolute; left:34px; top:{mid-34}px; '
            f'width:68px; height:68px; border-radius:4px; box-shadow:0 0 0 1.5px #8F8A80; object-fit:cover">')
 text(16, mid + 36, 104, "clean images", 15, "#55606E", 600, "center")
-box(170, r1 - 28, 250, 56, SNOW + "Vision encoder + projection", "venc", fs=19)
-box(170, r2 - 28, 250, 56, "Jointly learned frontend", "ours", fs=19)
-poly([(102, mid), (130, mid), (130, r1), (169, r1)])
-poly([(130, mid), (130, r2), (169, r2)])
-pill(520, r1, "tokens <i>z</i>")
-pill(520, r2, "tokens <i>&#7825;</i>", BLUE)
-box(620, r1 - 28, 150, 56, SNOW + "VLA policy", "vla", fs=19)
-box(620, r2 - 28, 150, 56, SNOW + "VLA policy", "vla", fs=19)
-pill(860, r1, "actions <i>a</i>")
-pill(860, r2, "actions <i>&acirc;</i>", BLUE)
-poly([(420, r1), (468, r1)]); poly([(572, r1), (619, r1)]); poly([(770, r1), (806, r1)])
-poly([(420, r2), (468, r2)], BLUE); poly([(572, r2), (619, r2)], BLUE); poly([(770, r2), (806, r2)], BLUE)
+# x layout spread across the full width
+EB0, EBW = 160, 280; ECX = EB0 + EBW // 2      # encoder boxes
+TKX = 590                                      # token pills
+VB0, VBW = 700, 180                            # policy boxes
+ACX = 1010                                     # action pills
+SX = 1210                                      # sum node
+box(EB0, r1 - 28, EBW, 56, SNOW + "Vision encoder + projection", "venc", fs=19)
+box(EB0, r2 - 28, EBW, 56, "Jointly learned frontend", "ours", fs=19)
+poly([(102, mid), (130, mid), (130, r1), (EB0 - 1, r1)])
+poly([(130, mid), (130, r2), (EB0 - 1, r2)])
+pill(TKX, r1, "tokens <i>z</i>")
+pill(TKX, r2, "tokens <i>&#7825;</i>", BLUE)
+box(VB0, r1 - 28, VBW, 56, SNOW + "VLA policy", "vla", fs=19)
+box(VB0, r2 - 28, VBW, 56, SNOW + "VLA policy", "vla", fs=19)
+pill(ACX, r1, "actions <i>a</i>")
+pill(ACX, r2, "actions <i>&acirc;</i>", BLUE)
+poly([(EB0 + EBW, r1), (TKX - 53, r1)]); poly([(TKX + 53, r1), (VB0 - 1, r1)]); poly([(VB0 + VBW, r1), (ACX - 55, r1)])
+poly([(EB0 + EBW, r2), (TKX - 53, r2)], BLUE); poly([(TKX + 53, r2), (VB0 - 1, r2)], BLUE); poly([(VB0 + VBW, r2), (ACX - 55, r2)], BLUE)
 
 # losses: three badges on one line, summed at the right
 LBG, LBD, LTX = "#FFF1E4", PURPLE, "#7A3B0A"
@@ -104,30 +110,26 @@ def loss(cx, w, label):
     out.append(f'<div style="position:absolute; left:{cx-w/2}px; top:{mid-16}px; width:{w}px; height:32px; box-sizing:border-box; '
                f'background:{LBG}; border:1.8px solid {LBD}; border-radius:8px; display:flex; align-items:center; '
                f'justify-content:center; font-size:17px; font-weight:700; color:{LTX}; white-space:nowrap">{label}</div>')
-loss(295, 112, "rate loss")
-loss(520, 118, "token loss")
-loss(860, 126, "action loss")
-# what each loss compares
-poly([(520, r1 + 15), (520, mid - 17)], RET, dash="4 3", head=False)
-poly([(520, r2 - 15), (520, mid + 17)], RET, dash="4 3", head=False)
-poly([(860, r1 + 15), (860, mid - 17)], RET, dash="4 3", head=False)
-poly([(860, r2 - 15), (860, mid + 17)], RET, dash="4 3", head=False)
-poly([(295, r2 - 28), (295, mid + 17)], RET, dash="4 3", head=False)
-# sum
-SX = 1010
-poly([(351, mid), (460, mid)], LBD); poly([(579, mid), (796, mid)], LBD); poly([(923, mid), (SX - 23, mid)], LBD)
+loss(ECX, 112, "rate loss")
+loss(TKX, 118, "token loss")
+loss(ACX, 126, "action loss")
+for x in (TKX, ACX):                          # what each loss compares
+    poly([(x, r1 + 15), (x, mid - 17)], RET, dash="4 3", head=False)
+    poly([(x, r2 - 15), (x, mid + 17)], RET, dash="4 3", head=False)
+poly([(ECX, r2 - 28), (ECX, mid + 17)], RET, dash="4 3", head=False)
+poly([(ECX + 57, mid), (TKX - 60, mid)], LBD); poly([(TKX + 60, mid), (ACX - 64, mid)], LBD); poly([(ACX + 64, mid), (SX - 23, mid)], LBD)
 out.append(f'<div style="position:absolute; left:{SX-22}px; top:{mid-22}px; width:44px; height:44px; box-sizing:border-box; '
            f'border-radius:50%; background:{LBG}; border:2px solid {LBD}; display:flex; align-items:center; '
            f'justify-content:center; font-size:26px; font-weight:700; color:{LTX}">&Sigma;</div>')
 text(SX + 30, mid - 12, 200, "training loss", 18, LTX, 700)
 # gradient back to the frontend
-poly([(SX, mid + 23), (SX, r2 + 52), (295, r2 + 52), (295, r2 + 29)], PURPLE, dash="6 4")
-text(520, r2 + 54, 400, "gradients update the frontend only", 16, PURPLE, 700, "center")
-# legend
-text(1336, r1 - 14, 160, SNOW + "frozen", 17, "#3F4A5A", 600)
-out.append(f'<div style="position:absolute; left:1336px; top:{r1+22}px; width:26px; height:18px; border-radius:4px; '
+poly([(SX, mid + 23), (SX, r2 + 52), (ECX, r2 + 52), (ECX, r2 + 29)], PURPLE, dash="6 4")
+text((ECX + SX) / 2 - 200, r2 + 54, 400, "gradients update the frontend only", 16, PURPLE, 700, "center")
+# legend, aligned with the two rows at the right edge
+text(1386, r1 - 12, 120, SNOW + "frozen", 17, "#3F4A5A", 600)
+out.append(f'<div style="position:absolute; left:1388px; top:{r2-9}px; width:26px; height:18px; border-radius:4px; '
            f'background:#D6E7FA; border:1.8px solid {BLUE}"></div>')
-text(1370, r1 + 20, 140, "trained", 17, "#3F4A5A", 600)
+text(1422, r2 - 12, 100, "trained", 17, "#3F4A5A", 600)
 
 out.append(f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}" style="position:absolute; left:0; top:0; '
            f'width:{W}px; height:{H}px; overflow:visible; pointer-events:none">{"".join(g)}</svg>')
