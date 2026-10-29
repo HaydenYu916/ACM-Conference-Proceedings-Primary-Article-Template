@@ -14,20 +14,19 @@
   (b)~Training: the frontend is trained against the frozen policy's own
   tokens and actions on clean images, with a rate term; only the frontend
   is updated.}
-  \Description{Top panel: an edge box holds three camera views and a
+  \Description{Top panel, top to bottom: three camera views enter an edge
   card labelled "jointly learned frontend", split into a light vision
-  encoder s and a feature codec (h, Q, rANS); a "previous codes" box under
-  the codec stores the quantized codes and conditions the codec on inter
-  uploads. A bitstream goes down to a cloud box with a "token decoder" card
-  (rANS decoding and g_s) and its own "previous codes" box; the decoder
-  outputs policy tokens to a frozen VLA policy that also receives language
-  and robot state, and an action chunk returns to the robot. Bottom panel:
-  clean images feed a frozen vision encoder plus projection and the jointly
-  learned frontend; each path produces tokens that feed the same frozen VLA
-  policy and give actions; a token loss compares the two token sets, an
-  action loss compares the two action sets, and a rate loss applies to the
-  frontend's codes; their sum is the training loss, and gradients update
-  only the frontend.}
+  encoder s and a feature codec (h, Q, rANS); a row of previous codes
+  beside it is stored and fed back on inter uploads. A bitstream goes down
+  to a cloud card labelled "token decoder" (rANS decoding and g_s), which
+  keeps its own previous codes and outputs policy tokens to a frozen VLA
+  policy that also receives language and robot state; an action chunk
+  returns to the robot. Bottom panel: clean images feed a frozen vision
+  encoder plus projection and the jointly learned frontend; each path
+  produces tokens that feed the same frozen VLA policy and give actions;
+  a token loss compares the two token sets, an action loss compares the
+  two action sets, and a rate loss applies to the frontend's codes; their
+  sum is the training loss, and gradients update only the frontend.}
   \label{fig:overview}
 \end{figure}
 
