@@ -1,9 +1,9 @@
 \section{System Overview}
 \label{sec:overview}
 
-\begin{figure*}[t]
+\begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{images/system-architecture.pdf}
+  \includegraphics[width=\columnwidth]{images/system-architecture.pdf}
   \caption{System overview (primary $\pi_{0.5}$ configuration).
   (a)~Deployment: on the robot, the light vision encoder and the feature
   codec of the jointly learned frontend turn camera images into an
@@ -14,22 +14,22 @@
   (b)~Training: the frontend is trained against the frozen policy's own
   tokens and actions on clean images, with a rate term; only the frontend
   is updated.}
-  \Description{Top panel: an edge box holds three camera views and the
-  jointly learned frontend: a light vision encoder s, then a feature codec
-  made of a feature head h, quantization Q and an rANS encoder, with a
-  "previous codes" box that stores the quantized codes and conditions the
-  feature head on inter uploads. A bitstream crosses to a cloud box with
-  rANS decoding, its own "previous codes" box conditioning a token decoder
-  g_s, policy tokens, and a frozen VLA
-  policy that also receives language and robot state; an action chunk
-  returns to the robot. Bottom panel: clean images feed a frozen vision
-  encoder plus projection and the jointly learned frontend; each path
-  produces tokens that feed the same frozen VLA policy and give actions;
-  a token loss compares the two token sets, an action loss compares the
-  two action sets, and a rate loss applies to the frontend's codes; their
-  sum is the training loss, and gradients update only the frontend.}
+  \Description{Top panel: an edge box holds three camera views and a
+  card labelled "jointly learned frontend", split into a light vision
+  encoder s and a feature codec (h, Q, rANS); a "previous codes" box under
+  the codec stores the quantized codes and conditions the codec on inter
+  uploads. A bitstream goes down to a cloud box with a "token decoder" card
+  (rANS decoding and g_s) and its own "previous codes" box; the decoder
+  outputs policy tokens to a frozen VLA policy that also receives language
+  and robot state, and an action chunk returns to the robot. Bottom panel:
+  clean images feed a frozen vision encoder plus projection and the jointly
+  learned frontend; each path produces tokens that feed the same frozen VLA
+  policy and give actions; a token loss compares the two token sets, an
+  action loss compares the two action sets, and a rate loss applies to the
+  frontend's codes; their sum is the training loss, and gradients update
+  only the frontend.}
   \label{fig:overview}
-\end{figure*}
+\end{figure}
 
 Each policy request incurs computation on the robot, transmission over the
 network, and computation in the cloud~\cite{neurosurgeon,roboecc}.
