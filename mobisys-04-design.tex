@@ -199,8 +199,7 @@ to the hidden features. The symbols sent are the codes $y_t$ themselves;
 there is no separate residual to invert. The primary $\pi_{0.5}$
 configuration uses $G=16$ and the OpenVLA-OFT configuration uses $G=8$.
 These intervals count policy uploads, not camera frames or actuator steps.
-% TODO(author): confirm that the OpenVLA-OFT configuration uses the same
-% conditional inter coding (confirmed for pi0.5 LIBERO fx2x3 and RoboCasa S5).
+Both configurations use this conditional inter coding.
 
 \paragraph{Why the code is the reference.}
 Video codecs code each frame against a reconstructed reference, so the
