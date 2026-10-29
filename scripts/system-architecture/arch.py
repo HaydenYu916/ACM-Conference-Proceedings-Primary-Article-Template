@@ -54,8 +54,8 @@ ICON_CLOUD = CLOUD_ICON.replace('width="30" height="20"', 'width="22" height="15
 # ------------------------------------------------------------------ (a) deployment, 476 x 474
 GREEN = ("#D5ECCF", "#4E9A44")
 TEAL = ("#D7F0EC", "#23998A", "#14655B")
-C["lang"] = ("#ECE6F7", "#7A6FB0", "#3B356B")
-C["robot"] = ("#E1F1DC", "#4E9A44", "#25521F")
+C["tok"] = ("#FDE6CF", "#DC7A2E", "#5A2C05")          # part of the frozen policy
+C["state"] = ("#FFFFFF", "#3A3833", "#2E3440")        # robot sensor input, neutral
 def panel_a(ox, oy):
     text(ox, oy, 460, "(a) Deployment", 17, "#1C1B19", 700)
     z0 = len(out)
@@ -128,13 +128,13 @@ def panel_a(ox, oy):
     VY = TY + CHB + 44
     VSP = TSP
     PT = (VSP + X1 - 10) // 2
-    poly([(PT, TY + CHB + 9), (PT, VY - 1)])
-    cells(PT - 40, TY + CHB + 20, 4, 10, 8, fill="#FDE2C8", bd="#DC7A2E")
-    label(PT + 7, TY + CHB + 15, 110, "visual tokens", 12, "#5A2C05", "left", False)
+    poly([(PT, TY + CHB + 9), (PT, VY - 1)], BLUE)
+    cells(PT - 40, TY + CHB + 20, 4, 10, 8, fill="#A9CBF2", bd=BLUE)
+    label(PT + 7, TY + CHB + 15, 120, "visual tokens <i>&#7825;</i>", 12, BLUE, "left", False)
     out.append(f'<div style="position:absolute; left:{RC+2}px; top:{TY+CHB+12}px; width:108px; height:24px; box-sizing:border-box; '
-               f'border:1.4px dashed #A8A39A; border-radius:6px; background:#FFFFFF; display:flex; align-items:center; '
-               f'justify-content:center; font-size:12px; font-weight:700; color:#7C838C; text-decoration:line-through">SigLIP + proj.</div>')
-    label(RC + 2, TY + CHB + 36, 108, "not run in the cloud", 11, "#7C838C", "center")
+               f'border:1.4px dashed #C2507A; border-radius:6px; background:#FDF1F5; display:flex; align-items:center; '
+               f'justify-content:center; font-size:12px; font-weight:700; color:#8E3A5C; text-decoration:line-through">SigLIP + proj.</div>')
+    label(RC + 2, TY + CHB + 36, 108, "not run in the cloud", 11, "#A8476E", "center")
     # ---- pi0.5 policy
     card(X0, VY, X1 - X0, CH, SNOW + "VLA policy (&pi;<sub>0.5</sub>, frozen)", kind="vla", fs=14.5)
     VIY = VY + 25
@@ -144,11 +144,11 @@ def panel_a(ox, oy):
     text(VSP, VIY + 2, X1 - 10 - VSP, "VLM backbone", 13, "#5A2C05", 700, "center")
     cells((VSP + X1 - 10) / 2, VIY + 21, 8, 12, 11, kind="vla")
     # language: instruction -> tokenizer -> VLM; state
-    box(RC + 2, VY + 4, 108, 24, "Tokenizer", "lang", fs=12.5)
+    box(RC + 2, VY + 4, 108, 24, "Tokenizer", "tok", fs=12.5)
     poly([(RC + 1, VY + 16), (X1 + 9, VY + 16)])
     out.append(f'<div style="position:absolute; left:{RC+2}px; top:{VY+42}px; width:108px; box-sizing:border-box; padding:2px 4px; '
-               f'border:1.3px solid #7A6FB0; border-radius:6px; background:#FFFFFF; font-size:11.5px; line-height:14px; '
-               f'font-style:italic; color:#3B356B; text-align:center">language instruction</div>')
+               f'border:1.3px solid #6B7280; border-radius:6px; background:#FFFFFF; font-size:11.5px; line-height:14px; '
+               f'font-style:italic; color:#2E3440; text-align:center">language instruction</div>')
     poly([(RC + 56, VY + 41), (RC + 56, VY + 29)])
     # action chunk -> robot -> cameras
     AY = VY + CH + 34
@@ -158,8 +158,8 @@ def panel_a(ox, oy):
     label(ax + 44, AY - 7, 100, "action chunk", 12, GREEN[1], "left", False)
     poly([(ax - 44, AY), (ox + 42, AY)], GREEN[1])
     out.append(ROBOT.replace('width="120" height="111"', 'width="44" height="41"').format(x=ox - 6, y=AY - 26))
-    poly([(ox + 14, AY - 28), (ox + 14, oy + 28 + 3 * 29 - 2)], GREEN[1])
-    box(RC + 30, AY - 12, 80, 24, "state", "robot", fs=12.5)
+    poly([(ox + 14, AY - 28), (ox + 14, oy + 28 + 3 * 29 - 2)], INK)
+    box(RC + 30, AY - 12, 80, 24, "state", "state", fs=12.5)
     # location zones, drawn behind the cards
     def zone(y0, y1, bg, bd, lab, icon):
         return [f'<div style="position:absolute; left:{X0-10}px; top:{y0}px; width:{ox+472-(X0-10)}px; height:{y1-y0}px; '
@@ -171,7 +171,7 @@ def panel_a(ox, oy):
     poly([(RC + 29, AY), (X1 - 40, AY), (X1 - 40, VY + CH + 9)])
 
 # ------------------------------------------------------------------ (b) training
-LBG, LBD, LTX = "#FFF1E4", PURPLE, "#7A3B0A"
+LBG, LBD, LTX = "#F1EAFB", "#7B4FB0", "#4A2C77"     # losses and gradients: purple
 def loss(cx, cy, w, lab):
     out.append(f'<div style="position:absolute; left:{cx-w/2}px; top:{cy-12}px; width:{w}px; height:24px; box-sizing:border-box; '
                f'background:{LBG}; border:1.5px solid {LBD}; border-radius:6px; display:flex; align-items:center; '
@@ -199,7 +199,7 @@ def panel_b_h(ox, oy):          # two rows, for the single-column figure (470 x 
     TK, V0, VW, AC, SX = ox + 214, ox + 252, 64, ox + 362, ox + 450
     pill(TK, r1, "tokens <i>z</i>"); pill(TK, r2, "tokens <i>&#7825;</i>", BLUE)
     box(V0, r1 - 18, VW, 36, SNOW + "VLA", "vla", fs=13.5); box(V0, r2 - 18, VW, 36, SNOW + "VLA", "vla", fs=13.5)
-    pill(AC, r1, "actions <i>a</i>"); pill(AC, r2, "actions <i>&acirc;</i>", BLUE)
+    pill(AC, r1, "actions <i>a</i>", GREEN[1]); pill(AC, r2, "actions <i>&acirc;</i>", GREEN[1])
     poly([(E0 + EW, r1), (TK - 33, r1)]); poly([(TK + 33, r1), (V0 - 1, r1)]); poly([(V0 + VW, r1), (AC - 36, r1)])
     poly([(E0 + EW, r2), (TK - 33, r2)], BLUE); poly([(TK + 33, r2), (V0 - 1, r2)], BLUE); poly([(V0 + VW, r2), (AC - 36, r2)], BLUE)
     EC = E0 + EW // 2
@@ -210,8 +210,8 @@ def panel_b_h(ox, oy):          # two rows, for the single-column figure (470 x 
     poly([(EC, r2 - 22), (EC, mid + 13)], RET, dash="3 2", head=False)
     poly([(EC + 25, mid), (TK - 27, mid)], LBD); poly([(TK + 27, mid), (AC - 29, mid)], LBD); poly([(AC + 29, mid), (SX - 16, mid)], LBD)
     sigma(SX, mid)
-    poly([(SX, mid + 16), (SX, r2 + 34), (EC, r2 + 34), (EC, r2 + 23)], PURPLE, dash="5 3")
-    label(EC + 20, r2 + 36, 230, "gradients update the frontend only", 12.5, PURPLE, "left", False)
+    poly([(SX, mid + 16), (SX, r2 + 34), (EC, r2 + 34), (EC, r2 + 23)], LBD, dash="5 3")
+    label(EC + 20, r2 + 36, 230, "gradients update the frontend only", 12.5, LBD, "left", False)
     legend(ox + 300, oy + 22)
 
 def panel_b_v(ox, oy):          # columns, for the double-column figure (470 x 384)
@@ -241,8 +241,8 @@ def panel_b_v(ox, oy):          # columns, for the double-column figure (470 x 3
     poly([(lc, ey + 13), (lc, tky - 13)], LBD); poly([(lc, tky + 13), (lc, acy - 13)], LBD); poly([(lc, acy + 13), (lc, sy - 16)], LBD)
     sigma(lc, sy)
     label(lc - 112, sy - 8, 90, "training loss", 12.5, LTX, "right", False)
-    poly([(lc + 16, sy), (ox + 452, sy), (ox + 452, ey), (c2 + 76, ey)], PURPLE, dash="5 3")
-    label(lc + 22, sy + 4, 200, "gradients update<br>the frontend only", 12.5, PURPLE, "left", False)
+    poly([(lc + 16, sy), (ox + 452, sy), (ox + 452, ey), (c2 + 76, ey)], LBD, dash="5 3")
+    label(lc + 22, sy + 4, 200, "gradients update<br>the frontend only", 12.5, LBD, "left", False)
     legend(ox + 4, oy + 362)
 
 if MODE == "single":
