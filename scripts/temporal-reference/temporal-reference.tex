@@ -1,0 +1,67 @@
+\documentclass[border=1pt]{standalone}
+\usepackage[scaled=0.92]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,fit,calc,backgrounds}
+\definecolor{nn}{HTML}{F6C6A8}\definecolor{nnline}{HTML}{D9825B}
+\definecolor{nonnn}{HTML}{A9D2F1}\definecolor{nonnnline}{HTML}{4F95CF}
+\definecolor{panel}{HTML}{EDEDED}\definecolor{txt}{HTML}{333333}
+\begin{document}
+\begin{tikzpicture}[
+  font=\footnotesize, text=txt,
+  >={Stealth[length=1.4mm]}, line width=0.5pt,
+  box/.style={rounded corners=2pt, minimum height=4.3mm, minimum width=9mm, inner sep=1.5pt, align=center},
+  nnb/.style={box, fill=nn, draw=nnline},
+  pb/.style={box, fill=nonnn, draw=nonnnline},
+  op/.style={circle, draw=txt, fill=white, inner sep=0pt, minimum size=3.4mm},
+  pan/.style={fill=panel, rounded corners=3pt, inner sep=2.5pt},
+  subcap/.style={font=\footnotesize\itshape, anchor=north, align=center},
+]
+% shared row positions (cm), top to bottom
+\def\rA{0}\def\rB{-0.66}\def\rC{-1.32}\def\rD{-1.98}\def\rE{-2.55}
+\def\side{1.2}
+
+% ---------- (a) reconstructed reference ----------
+\begin{scope}[xshift=0cm]
+\node[nnb] (a1) at (0,\rA) {$g_a$};
+\node[op]  (a2) at (0,\rB) {$-$};
+\node[pb]  (a3) at (0,\rC) {$Q$};
+\node[pb]  (a4) at (0,\rD) {rANS};
+\node[nnb] (a5) at (\side,\rB) {decoder};
+\coordinate (a6) at (0,\rE);
+\draw[->] (a1)--(a2); \draw[->] (a2)--(a3); \draw[->] (a3)--(a4);
+\draw[->] (a4)--(a6) node[right, font=\scriptsize, inner sep=1pt]{cloud};
+\draw[->] (a3.east) -| (a5.south);
+\draw[->] (a5)--(a2);
+\coordinate (aL) at (-0.55,\rA); \coordinate (aR) at (\side+0.62,\rA);
+\begin{scope}[on background layer]
+\node[pan, fit=(a1)(a4)(a5)(aL)(aR)] (pa) {};
+\end{scope}
+\end{scope}
+
+% ---------- (b) quantized-code condition (ours) ----------
+% rows match (a): Q and rANS sit on the same rows as in (a)
+\begin{scope}[xshift=3.15cm]
+\node[nnb] (b1) at (0,\rA) {$g_a$};
+\node[pb]  (b2) at (0,\rC) {$Q$};
+\node[pb]  (b4) at (0,\rD) {rANS};
+\node[pb]  (b5) at (\side,\rA) {$y_{t-1}$};
+\coordinate (b6) at (0,\rE);
+\draw[->] (b1)--(b2); \draw[->] (b2)--(b4);
+\draw[->] (b4)--(b6) node[right, font=\scriptsize, inner sep=1pt]{cloud};
+\draw[->] (b2.east) -| node[pos=0.25, below, font=\scriptsize]{store} (b5.south);
+\draw[->] (b5)--(b1);
+\coordinate (bL) at (-0.55,\rA); \coordinate (bR) at (\side+0.62,\rA);
+\begin{scope}[on background layer]
+\node[pan, fit=(b1)(b4)(b5)(bL)(bR)] (pnb) {};
+\end{scope}
+\end{scope}
+
+% sub-captions aligned on one baseline
+\path (pa.south) ++(0,-0.5) coordinate (capy);
+\node[subcap] at (pa.south |- capy) {(a) Reconstructed\\ reference};
+\node[subcap] at (pnb.south |- capy) {(b) Quantized-code\\ condition (ours)};
+
+\end{tikzpicture}
+\end{document}
