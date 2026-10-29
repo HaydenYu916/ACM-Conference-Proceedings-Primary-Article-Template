@@ -39,9 +39,9 @@ Figure~\ref{fig:overview}a shows the deployed pipeline. The three trained
 parts form one jointly learned frontend. On the robot, a \emph{light vision
 encoder}, initialized by distillation from the policy's visual encoder,
 extracts features from each camera image, and a \emph{feature codec} maps
-them to integer codes. \unsure{Each code is predicted from the code sent at
-the previous upload, except at periodic intra frames, and the residual is
-entropy-coded with integer rANS.} In the cloud, the receiver reverses the
+them to integer codes. \unsure{Except at periodic intra uploads, the
+feature codec is conditioned on the dequantized codes of the previous
+upload, and its integer codes are entropy-coded with integer rANS.} In the cloud, the receiver reverses the
 entropy and temporal coding to recover the codes exactly, and a
 \emph{token decoder} turns them into policy visual tokens that replace the
 output of the policy's visual encoder. The frozen policy consumes these tokens together
@@ -65,15 +65,18 @@ light vision encoder, trained jointly with the rest of the frontend, so
 its work is limited to that encoder and the feature codec
 (\S\ref{sec:design-frontend}).
 
-% PENDING (2026-10-30): A100 reports S5 uses conditional inter coding
-% (symbols sent to rANS = codes, no explicit residual). Confirm the inter
-% mechanism before finalizing the red text here, Eq. dpcm in Sec. 4.3, and the figures.
+% PENDING (2026-10-30): paper_fig1/scripts/codes_fig1.py states that S5 uses
+% conditional inter coding: "on an inter upload the encoder sees the previous
+% dequantised codes and directly emits the symbols that go into rANS". Red text
+% updated accordingly; Sec. 4.3 (Eq. dpcm, r_t = y_t - y_{t-1}) and its figure
+% still describe subtraction and must be rewritten once confirmed.
 \paragraph{Temporal coding without a decoder on the robot.}
 Video codecs predict each frame from a reconstructed reference, so the
 encoder also runs the decoder. For a learned codec, this would place a
 neural decoder on the robot, and floating-point differences between the
 robot and the cloud could desynchronize the reference. \unsure{We instead
-predict in the space of quantized codes, which both ends hold exactly,} and use
+condition on the previous upload's quantized codes, which both ends hold
+exactly,} and use
 integer-only rANS to produce identical bitstreams from the same symbols
 and coding tables on ARM and x86 hosts
 (\S\ref{sec:design-temporal}).
