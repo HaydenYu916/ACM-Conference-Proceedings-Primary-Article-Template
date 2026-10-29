@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """System architecture, compact card style (after ActECC Fig. 3a).
-Usage: arch.py OUT.html thumbs.json single|double"""
+Usage: arch10.py OUT.html thumbs.json single|double"""
 import sys
 exec(open(__file__.replace("arch.py", "helpers.py")).read())
 MODE = sys.argv[3]
@@ -64,57 +64,73 @@ def panel_a(ox, oy):
     for k, c in enumerate(["cam0", "cam2", "cam1"]):
         out.append(f'<img src="data:image/jpeg;base64,{TH[c]}" style="position:absolute; left:{ox}px; top:{oy+28+k*29}px; '
                    f'width:27px; height:27px; border-radius:3px; box-shadow:0 0 0 1.2px #8F8A80; object-fit:cover">')
-    # ---- edge card
+    # ---- edge card: s | (h -> Q -> rANS), with the stored code y_{t-1} looping from Q back to h
+    def mini(x, y, w, html, kind="ours"):
+        div(x, y, w, 16, f"background:#FFFFFF; border:1.3px solid {BLUE}; border-radius:4px")
+        text(x, y + 1, w, html, 11.5, NAVY, 700, "center")
+    def buffer(cx, y):
+        div(cx - 28, y, 56, 18, "background:#E4E7EB; border:1.3px solid #8C949E; border-radius:4px")
+        text(cx - 28, y + 1, 56, "<i>y</i><sub><i>t</i>&minus;1</sub>", 12, "#2E3440", 700, "center")
+    CHB = 96                                         # taller cards hold the reference loop
     EY = oy + 30
-    card(X0, EY, X1 - X0, CH, "Edge: jointly learned frontend", fs=14.5, icon=ICON_CHIP)
+    card(X0, EY, X1 - X0, CHB, "Edge: jointly learned frontend", fs=14.5, icon=ICON_CHIP)
     IY = EY + 25
-    SP = X0 + 10 + 156
+    SP = X0 + 10 + 150
     strip(X0 + 10, IY, X1 - X0 - 20, SP)
     text(X0 + 10, IY + 2, SP - X0 - 10, "Light vision encoder <i>s</i>", 13, NAVY, 700, "center")
     cells((X0 + 10 + SP) / 2, IY + 21, 7, 13, 11)
-    text(SP, IY + 2, X1 - 10 - SP, "Feature codec", 13, NAVY, 700, "center")
-    cells(SP + 22, IY + 23, 4, 7, 7)
-    text(SP + 50, IY + 19, 80, "<i>h</i> &middot; <i>Q</i> &middot; rANS", 11.5, "#3F5E86", 600)
-    ye = EY + CH // 2
+    text(SP, IY + 1, X1 - 10 - SP, "Feature codec", 13, NAVY, 700, "center")
+    hx, qx, rx = SP + 10, SP + 42, SP + 74            # left edges of h, Q, rANS
+    mini(hx, IY + 19, 22, "<i>h</i>"); mini(qx, IY + 19, 22, "<i>Q</i>"); mini(rx, IY + 19, 40, "rANS")
+    poly([(hx + 22, IY + 27), (qx - 1, IY + 27)]); poly([(qx + 22, IY + 27), (rx - 1, IY + 27)])
+    BY = IY + IHH + 10
+    buffer((hx + qx + 22) / 2, BY)
+    poly([(qx + 11, IY + 36), (qx + 11, BY - 1)], RET)                  # store the quantized code
+    poly([(hx + 11, BY - 1), (hx + 11, IY + 36)], RET)                  # condition h on the next upload
+    bc = (hx + qx + 22) / 2
+    label(bc - 28 - 156, BY + 2, 150, "kept for the next upload", 11, "#55606E", "right")
+    poly([((X0 + 10 + SP) / 2 + 52, IY + 27), (hx - 1, IY + 27)])           # s -> h
+    ye = EY + CHB // 2 - 8
     for k in range(3):
         cy = oy + 28 + k * 29 + 13
         poly([(ox + 28, cy), (ox + 36, cy)], head=False)
     poly([(ox + 36, oy + 41), (ox + 36, oy + 99)], head=False)
     poly([(ox + 36, ye), (X0 - 1, ye)])
-    def prev(yc, xin):
-        cells(RC + 56, yc - 12, 4, 12, 11, fill="#E4E7EB", bd="#8C949E")
-        label(RC + 6, yc + 1, 100, "previous codes <i>y</i><sub><i>t</i>&minus;1</sub>", 11.5, "#55606E", "center", False)
-        poly([(xin, yc - 10), (RC + 26, yc - 10)], RET)
-        poly([(RC + 26, yc - 3), (xin + 1, yc - 3)], RET)
-    prev(ye, X1 + 9)
-    # ---- bitstream: from the codec half down to the rANS-decode half
-    TY = EY + CH + 42
-    TSP = X0 + 10 + 104
-    xc = (SP + X1 - 10) // 2
+    label(RC + 4, EY + 34, 106, "Jetson AGX Orin", 12, "#55606E", "center")
+    # ---- bitstream: from rANS down to rANS decode
+    TY = EY + CHB + 42
+    TSP = X0 + 10 + 120
+    xc = rx + 20
     xr = (X0 + 10 + TSP) // 2
-    ym = EY + CH + 24
-    poly([(xc, EY + CH + 9), (xc, ym), (xr, ym), (xr, TY - 1)], BLUE)
+    ym = EY + CHB + 24
+    poly([(xc, EY + CHB + 9), (xc, ym), (xr, ym), (xr, TY - 1)], BLUE)
     label(xr - 74, ym - 15, 70, "bitstream", 12.5, BLUE, "right", False)
-    # ---- cloud token decoder
-    card(X0, TY, X1 - X0, CH, "Cloud: token decoder", fs=14.5, icon=ICON_CLOUD)
+    # ---- cloud token decoder: rANS decode -> g_s, with its own stored y_{t-1}
+    card(X0, TY, X1 - X0, CHB, "Cloud: token decoder", fs=14.5, icon=ICON_CLOUD)
     TIY = TY + 25
     strip(X0 + 10, TIY, X1 - X0 - 20, TSP)
     text(X0 + 10, TIY + 2, TSP - X0 - 10, "rANS decode", 13, NAVY, 700, "center")
     cells((X0 + 10 + TSP) / 2, TIY + 23, 4, 7, 7)
     text(TSP, TIY + 2, X1 - 10 - TSP, "Synthesis <i>g<sub>s</sub></i> <span style=\"font-weight:600; color:#3F5E86\">(+ state)</span>", 13, NAVY, 700, "center")
-    cells((TSP + X1 - 10) / 2, TIY + 21, 7, 13, 11)
-    prev(TY + CH // 2, X1 + 9)
+    cells((TSP + X1 - 10) / 2, TIY + 21, 7, 12, 11)
+    TBY = TIY + IHH + 10
+    poly([((X0 + 10 + TSP) / 2 + 17, TIY + 27), ((TSP + X1 - 10) / 2 - 51, TIY + 27)])   # rANS decode -> g_s
+    buffer(TSP, TBY)
+    poly([(TSP - 16, TIY + IHH), (TSP - 16, TBY - 1)], RET)
+    poly([(TSP + 16, TBY - 1), (TSP + 16, TIY + IHH)], RET)
+    label(TSP + 34, TBY + 1, 150, "same <i>y</i><sub><i>t</i>&minus;1</sub> as the robot", 11, "#55606E", "left")
+    label(RC + 4, TY + 34, 106, "A40 server", 12, "#55606E", "center")
     # ---- visual tokens -> policy; SigLIP + projection is not run
-    VY = TY + CH + 44
+    VY = TY + CHB + 44
     VSP = TSP
     PT = (VSP + X1 - 10) // 2
-    poly([(PT, TY + CH + 9), (PT, VY - 1)])
-    cells(PT - 40, TY + CH + 20, 4, 10, 8, fill="#FDE2C8", bd="#DC7A2E")
-    label(PT + 7, TY + CH + 15, 110, "visual tokens", 12, "#5A2C05", "left", False)
-    out.append(f'<div style="position:absolute; left:{RC+2}px; top:{TY+CH+12}px; width:108px; height:24px; box-sizing:border-box; '
+    poly([(PT, TY + CHB + 9), (PT, VY - 1)])
+    cells(PT - 40, TY + CHB + 20, 4, 10, 8, fill="#FDE2C8", bd="#DC7A2E")
+    label(PT + 7, TY + CHB + 15, 110, "visual tokens", 12, "#5A2C05", "left", False)
+    out.append(f'<div style="position:absolute; left:{RC+2}px; top:{TY+CHB+12}px; width:108px; height:24px; box-sizing:border-box; '
                f'border:1.4px dashed #A8A39A; border-radius:6px; background:#FFFFFF; display:flex; align-items:center; '
                f'justify-content:center; font-size:12px; font-weight:700; color:#7C838C; text-decoration:line-through">SigLIP + proj.</div>')
-    label(RC + 2, TY + CH + 36, 108, "not run in the cloud", 11, "#7C838C", "center")
+    label(RC + 2, TY + CHB + 36, 108, "not run in the cloud", 11, "#7C838C", "center")
     # ---- pi0.5 policy
     card(X0, VY, X1 - X0, CH, SNOW + "VLA policy (&pi;<sub>0.5</sub>, frozen)", kind="vla", fs=14.5)
     VIY = VY + 25
@@ -218,9 +234,9 @@ def panel_b_v(ox, oy):          # columns, for the double-column figure (470 x 3
     legend(ox + 4, oy + 362)
 
 if MODE == "single":
-    W, H = 476, 586
+    W, H = 476, 640
     panel_a(4, 4)
-    panel_b_h(4, 386)
+    panel_b_h(4, 440)
 else:
     W, H = 980, 392
     panel_a(4, 4)

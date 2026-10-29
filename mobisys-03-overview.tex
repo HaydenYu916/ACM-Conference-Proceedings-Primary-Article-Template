@@ -16,11 +16,13 @@
   is updated.}
   \Description{Top panel, top to bottom: three camera views enter an edge
   card labelled "jointly learned frontend", split into a light vision
-  encoder s and a feature codec (h, Q, rANS); a row of previous codes
-  beside it is stored and fed back on inter uploads. A bitstream goes from
-  the codec down to the rANS decoder of a cloud card labelled "token
-  decoder", whose synthesis transform g_s also receives the robot state and
-  keeps its own previous codes. The decoder outputs visual tokens to the
+  encoder s and a feature codec in which h, Q and rANS run in order; the
+  quantized code y_{t-1} is kept after Q and fed back into h for the next
+  upload. A bitstream goes from rANS down to the rANS decoder of a cloud
+  card labelled "token decoder"; the decoded code is kept as the same
+  y_{t-1} and fed into the synthesis transform g_s, which also receives the
+  robot state. A Jetson AGX Orin and an A40 server are named as the edge
+  and cloud devices. The decoder outputs visual tokens to the
   VLM backbone of the frozen pi0.5 policy; the policy's own SigLIP encoder
   and projection are shown crossed out as not run. A tokenizer feeds the
   language instruction to the VLM backbone, the robot state also enters
