@@ -21,8 +21,8 @@
   upload. A bitstream goes from rANS down to the rANS decoder of a cloud
   card labelled "token decoder"; the decoded code is kept as the same
   y_{t-1} and fed into the synthesis transform g_s, which also receives the
-  robot state. A Jetson AGX Orin and an A40 server are named as the edge
-  and cloud devices. The decoder outputs visual tokens to the
+  robot state. An edge zone holds the frontend, and a cloud zone holds the
+  token decoder and the policy. The decoder outputs visual tokens to the
   VLM backbone of the frozen pi0.5 policy; the policy's own SigLIP encoder
   and projection are shown crossed out as not run. A tokenizer feeds the
   language instruction to the VLM backbone, the robot state also enters

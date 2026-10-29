@@ -53,8 +53,12 @@ ICON_CLOUD = CLOUD_ICON.replace('width="30" height="20"', 'width="22" height="15
 
 # ------------------------------------------------------------------ (a) deployment, 476 x 474
 GREEN = ("#D5ECCF", "#4E9A44")
+TEAL = ("#D7F0EC", "#23998A", "#14655B")
+C["lang"] = ("#ECE6F7", "#7A6FB0", "#3B356B")
+C["robot"] = ("#E1F1DC", "#4E9A44", "#25521F")
 def panel_a(ox, oy):
     text(ox, oy, 460, "(a) Deployment", 17, "#1C1B19", 700)
+    z0 = len(out)
     X0, X1 = ox + 50, ox + 346
     RC = ox + 362                                   # right column
     CH, IHH = 70, 38                                # card height, inner-strip height
@@ -69,11 +73,11 @@ def panel_a(ox, oy):
         div(x, y, w, 16, f"background:#FFFFFF; border:1.3px solid {BLUE}; border-radius:4px")
         text(x, y + 1, w, html, 11.5, NAVY, 700, "center")
     def buffer(cx, y):
-        div(cx - 28, y, 56, 18, "background:#E4E7EB; border:1.3px solid #8C949E; border-radius:4px")
-        text(cx - 28, y + 1, 56, "<i>y</i><sub><i>t</i>&minus;1</sub>", 12, "#2E3440", 700, "center")
+        div(cx - 28, y, 56, 18, f"background:{TEAL[0]}; border:1.4px solid {TEAL[1]}; border-radius:4px")
+        text(cx - 28, y + 1, 56, "<i>y</i><sub><i>t</i>&minus;1</sub>", 12, TEAL[2], 700, "center")
     CHB = 96                                         # taller cards hold the reference loop
     EY = oy + 30
-    card(X0, EY, X1 - X0, CHB, "Edge: jointly learned frontend", fs=14.5, icon=ICON_CHIP)
+    card(X0, EY, X1 - X0, CHB, "Jointly learned frontend", fs=14.5)
     IY = EY + 25
     SP = X0 + 10 + 150
     strip(X0 + 10, IY, X1 - X0 - 20, SP)
@@ -85,18 +89,18 @@ def panel_a(ox, oy):
     poly([(hx + 22, IY + 27), (qx - 1, IY + 27)]); poly([(qx + 22, IY + 27), (rx - 1, IY + 27)])
     BY = IY + IHH + 10
     buffer((hx + qx + 22) / 2, BY)
-    poly([(qx + 11, IY + 36), (qx + 11, BY - 1)], RET)                  # store the quantized code
-    poly([(hx + 11, BY - 1), (hx + 11, IY + 36)], RET)                  # condition h on the next upload
+    poly([(qx + 11, IY + 36), (qx + 11, BY - 1)], TEAL[1])            # store the quantized code
+    poly([(hx + 11, BY - 1), (hx + 11, IY + 36)], TEAL[1])            # condition h on the next upload
     bc = (hx + qx + 22) / 2
-    label(bc - 28 - 156, BY + 2, 150, "kept for the next upload", 11, "#55606E", "right")
-    poly([((X0 + 10 + SP) / 2 + 52, IY + 27), (hx - 1, IY + 27)])           # s -> h
+    label(bc - 28 - 156, BY + 2, 150, "kept for the next upload", 11, TEAL[2], "right")
+
     ye = EY + CHB // 2 - 8
     for k in range(3):
         cy = oy + 28 + k * 29 + 13
         poly([(ox + 28, cy), (ox + 36, cy)], head=False)
     poly([(ox + 36, oy + 41), (ox + 36, oy + 99)], head=False)
     poly([(ox + 36, ye), (X0 - 1, ye)])
-    label(RC + 4, EY + 34, 106, "Jetson AGX Orin", 12, "#55606E", "center")
+
     # ---- bitstream: from rANS down to rANS decode
     TY = EY + CHB + 42
     TSP = X0 + 10 + 120
@@ -106,7 +110,7 @@ def panel_a(ox, oy):
     poly([(xc, EY + CHB + 9), (xc, ym), (xr, ym), (xr, TY - 1)], BLUE)
     label(xr - 74, ym - 15, 70, "bitstream", 12.5, BLUE, "right", False)
     # ---- cloud token decoder: rANS decode -> g_s, with its own stored y_{t-1}
-    card(X0, TY, X1 - X0, CHB, "Cloud: token decoder", fs=14.5, icon=ICON_CLOUD)
+    card(X0, TY, X1 - X0, CHB, "Token decoder", fs=14.5)
     TIY = TY + 25
     strip(X0 + 10, TIY, X1 - X0 - 20, TSP)
     text(X0 + 10, TIY + 2, TSP - X0 - 10, "rANS decode", 13, NAVY, 700, "center")
@@ -114,12 +118,12 @@ def panel_a(ox, oy):
     text(TSP, TIY + 2, X1 - 10 - TSP, "Synthesis <i>g<sub>s</sub></i> <span style=\"font-weight:600; color:#3F5E86\">(+ state)</span>", 13, NAVY, 700, "center")
     cells((TSP + X1 - 10) / 2, TIY + 21, 7, 12, 11)
     TBY = TIY + IHH + 10
-    poly([((X0 + 10 + TSP) / 2 + 17, TIY + 27), ((TSP + X1 - 10) / 2 - 51, TIY + 27)])   # rANS decode -> g_s
+
     buffer(TSP, TBY)
-    poly([(TSP - 16, TIY + IHH), (TSP - 16, TBY - 1)], RET)
-    poly([(TSP + 16, TBY - 1), (TSP + 16, TIY + IHH)], RET)
-    label(TSP + 34, TBY + 1, 150, "same <i>y</i><sub><i>t</i>&minus;1</sub> as the robot", 11, "#55606E", "left")
-    label(RC + 4, TY + 34, 106, "A40 server", 12, "#55606E", "center")
+    poly([(TSP - 16, TIY + IHH), (TSP - 16, TBY - 1)], TEAL[1])
+    poly([(TSP + 16, TBY - 1), (TSP + 16, TIY + IHH)], TEAL[1])
+    label(TSP + 34, TBY + 1, 150, "same <i>y</i><sub><i>t</i>&minus;1</sub> as the robot", 11, TEAL[2], "left")
+
     # ---- visual tokens -> policy; SigLIP + projection is not run
     VY = TY + CHB + 44
     VSP = TSP
@@ -140,22 +144,30 @@ def panel_a(ox, oy):
     text(VSP, VIY + 2, X1 - 10 - VSP, "VLM backbone", 13, "#5A2C05", 700, "center")
     cells((VSP + X1 - 10) / 2, VIY + 21, 8, 12, 11, kind="vla")
     # language: instruction -> tokenizer -> VLM; state
-    box(RC + 2, VY + 4, 108, 24, "Tokenizer", "grey", fs=12.5)
+    box(RC + 2, VY + 4, 108, 24, "Tokenizer", "lang", fs=12.5)
     poly([(RC + 1, VY + 16), (X1 + 9, VY + 16)])
     out.append(f'<div style="position:absolute; left:{RC+2}px; top:{VY+42}px; width:108px; box-sizing:border-box; padding:2px 4px; '
                f'border:1.3px solid #7A6FB0; border-radius:6px; background:#FFFFFF; font-size:11.5px; line-height:14px; '
                f'font-style:italic; color:#3B356B; text-align:center">language instruction</div>')
     poly([(RC + 56, VY + 41), (RC + 56, VY + 29)])
     # action chunk -> robot -> cameras
-    AY = VY + CH + 26
+    AY = VY + CH + 34
     ax = (X0 + 10 + VSP) // 2
     poly([(ax, VY + CH + 9), (ax, AY - 8)], GREEN[1])
     cells(ax, AY - 6, 6, 11, 11, fill=GREEN[0], bd=GREEN[1])
     label(ax + 44, AY - 7, 100, "action chunk", 12, GREEN[1], "left", False)
     poly([(ax - 44, AY), (ox + 42, AY)], GREEN[1])
     out.append(ROBOT.replace('width="120" height="111"', 'width="44" height="41"').format(x=ox - 6, y=AY - 26))
-    poly([(ox + 14, AY - 28), (ox + 14, oy + 28 + 3 * 29 - 2)], RET)
-    box(RC + 30, AY - 12, 80, 24, "state", "grey", fs=12.5)
+    poly([(ox + 14, AY - 28), (ox + 14, oy + 28 + 3 * 29 - 2)], GREEN[1])
+    box(RC + 30, AY - 12, 80, 24, "state", "robot", fs=12.5)
+    # location zones, drawn behind the cards
+    def zone(y0, y1, bg, bd, lab, icon):
+        return [f'<div style="position:absolute; left:{X0-10}px; top:{y0}px; width:{ox+472-(X0-10)}px; height:{y1-y0}px; '
+                f'box-sizing:border-box; background:{bg}; border:1.4px solid {bd}; border-radius:12px"></div>',
+                f'<div style="position:absolute; left:{RC-2}px; top:{y0+7}px; display:flex; gap:5px; align-items:center; '
+                f'font-size:14px; font-weight:700; color:#3F4A5A">{icon}<span>{lab}</span></div>']
+    out[z0:z0] = (zone(EY - 8, EY + CHB + 16, "#F7F3EC", "#DDD3C2", "Edge (robot)", ICON_CHIP)
+                  + zone(TY - 8, VY + CH + 16, "#EDF2F8", "#C6D2E0", "Cloud", ICON_CLOUD))
     poly([(RC + 29, AY), (X1 - 40, AY), (X1 - 40, VY + CH + 9)])
 
 # ------------------------------------------------------------------ (b) training
@@ -234,9 +246,9 @@ def panel_b_v(ox, oy):          # columns, for the double-column figure (470 x 3
     legend(ox + 4, oy + 362)
 
 if MODE == "single":
-    W, H = 476, 640
+    W, H = 476, 648
     panel_a(4, 4)
-    panel_b_h(4, 440)
+    panel_b_h(4, 448)
 else:
     W, H = 980, 392
     panel_a(4, 4)
