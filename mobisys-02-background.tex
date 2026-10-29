@@ -56,15 +56,17 @@ policy. A learned image codec makes both ends heavier: SPARC sends only
 918\,B, but its encoder takes 88.8\,ms on the Orin and its neural decoder
 88.5\,ms in the cloud, and the request takes 433.5\,ms, longer than with
 uncompressed images.
+% Sources: 39.9/2.4 ms = paper_notes/libero_tables.md Table A (Orin edge encode;
+% no-distillation ablation vs. H.264 CRF30); 291 = rc_tables.md Table R1 (uncompressed + AV1).
 % TODO(author): define SPARC's "official" vs. "all-GPU" layouts in Sec. 5/6
 % (official layout: 853.3 ms end to end; results/realrobot_latency_table.md).
 
 The obvious alternative is to move part or all of that encoder to the
 robot, as in split inference (Figure~\ref{fig:system-paths}b). In the
 limiting case where the whole encoder runs on the robot, this is
-expensive: \unsure{running the original SigLIP tower on the Orin, together
-with a light bottleneck encoder, takes 39.9\,ms per two-camera upload},
-compared with 2.9\,ms to encode H.264. Splitting earlier instead leaves
+expensive: on LIBERO's two-camera uploads, running the original SigLIP
+tower on the Orin in front of a feature codec takes 39.9\,ms per upload,
+against 2.4\,ms to encode the same images with H.264. Splitting earlier instead leaves
 large intermediate features to send and the remaining layers to run in
 the cloud. A useful representation must therefore be
 cheap to produce on the robot, small on the network, and cheap to consume
@@ -120,8 +122,8 @@ long-horizon suite, with 450 versus 466 successes out of 500 ($p=0.029$).
 H.264 needed 3.50\,KB per upload, about $1.9\times$ the bytes, before the
 difference from uncompressed images was no longer significant
 ($p=0.30$). On RoboCasa, H.264 at CRF34, averaging 3.0\,KB per upload in closed
-loop, succeeded in none of 480 episodes, against 291 for \unsure{uncompressed frames passed through the
-AV1 pipeline used in the policy's training data} (\S\ref{sec:evaluation}), even though the decoded frames
+loop, succeeded in none of 480 episodes, against 291 for uncompressed frames passed through the AV1 pipeline used
+for the policy's training data (\S\ref{sec:evaluation}), even though the decoded frames
 retained a PSNR of 31--34\,dB on average across cameras
 (Figure~\ref{fig:pixel-vs-control}). Over the 24 uploads of the episode in
 Figure~\ref{fig:pixel-vs-control}, JPEG at q20 matches the PSNR of H.264
