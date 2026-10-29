@@ -11,6 +11,7 @@ from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
 a = np.load(sys.argv[1] if len(sys.argv) > 1 else "heat_fig1.npz")
 b = np.load(sys.argv[2] if len(sys.argv) > 2 else "heat_fig1_more.npz")
+c = np.load(sys.argv[3] if len(sys.argv) > 3 else "codes_fig1.npz")   # our transmitted integer codes
 U, V, VMAX = 18, 0, 0.10
 orig = a["u8"][U, V]
 def psnr(x, y):
@@ -50,19 +51,20 @@ y_row1, y_row2 = TOP, TOP + P + ROWGAP
 for i, (t, pix, dev, lab) in enumerate(cols):
     x = LEFT + i * (P + GAP)
     a0, a1 = ax_at(x, y_row1), ax_at(x, y_row2)
-    a0.imshow(pix if pix is not None else blank)
-    if pix is None:
-        a0.text(0.5, 0.5, "no image\nsent", ha="center", va="center", transform=a0.transAxes,
-                fontsize=6, color="#666666")
+    if pix is not None:
+        a0.imshow(pix)
+    else:   # ours: no image exists; show how many non-zero code symbols each token carries
+        nz = (c["codes_q"][U, V] != 0).sum(-1).reshape(16, 16)
+        a0.imshow(nz, cmap="Blues", vmin=0, vmax=8, interpolation="nearest")
     a1.imshow(overlay(dev), interpolation="nearest")
     for ax in (a0, a1):
         ax.set_xticks([]); ax.set_yticks([])
         for s_ in ax.spines.values(): s_.set_linewidth(0.4)
     a0.set_title(t, fontsize=6.6, pad=1.5, weight="bold" if t == "Ours" else "normal")
-    a0.text(0.5, -0.03, lab[0] if pix is None else f"{lab[0]}\n{lab[1]}", transform=a0.transAxes,
+    a0.text(0.5, -0.03, f"{lab[0]}\ncodes" if pix is None else f"{lab[0]}\n{lab[1]}", transform=a0.transAxes,
             ha="center", va="top", fontsize=5.8, linespacing=1.1)
     a1.text(0.5, -0.03, f"mean {dev.mean():.3f}", transform=a1.transAxes, ha="center", va="top", fontsize=5.8)
-fig.text(0.07 / FW, 1 - (y_row1 + P / 2) / FH, "Pixels", rotation=90, ha="center", va="center", fontsize=6.4)
+fig.text(0.07 / FW, 1 - (y_row1 + P / 2) / FH, "Received", rotation=90, ha="center", va="center", fontsize=6.4)
 fig.text(0.07 / FW, 1 - (y_row2 + P / 2) / FH, "Policy tokens", rotation=90, ha="center", va="center",
          fontsize=6.4)
 xc = LEFT + 4 * (P + GAP) + 0.0

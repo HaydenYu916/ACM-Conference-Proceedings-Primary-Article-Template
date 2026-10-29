@@ -87,13 +87,15 @@ the intended edge and cloud devices.
   \caption{Pixel fidelity is not control fidelity. On one RoboCasa upload,
   H.264 (CRF34) and JPEG (q20) keep about 33\,dB PSNR, yet the $\pi_{0.5}$
   tokens computed from them deviate far more than those from SPARC, whose
-  PSNR is lowest, or from our frontend, which sends no image. Deviation is
+  PSNR is lowest, or from our frontend, which sends no image (its panel
+  shows the non-zero code symbols per token; darker is more). Deviation is
   $1-\cos$ between each post-projection token and its clean counterpart;
   across 8 episodes, H.264 deviation averages $3.8\times$ ours.}
   \Description{A two-row grid with four columns: H.264, JPEG, SPARC and
   ours. The top row shows the decoded frames; H.264 (1.53 KB,
   33.0 dB) and JPEG (8.84 KB, 32.8 dB) look like the camera image, SPARC
-  (0.91 KB, 26.4 dB) is blurrier, and ours sends no image. The bottom row
+  (0.91 KB, 26.4 dB) is blurrier, and ours (1.12 KB) shows a blue map of
+  non-zero code symbols per token instead of an image. The bottom row
   shows token-deviation heatmaps: H.264 (mean 0.032) and JPEG (mean 0.036)
   are bright around the robot arm and image borders; SPARC (mean 0.009) and
   ours (mean 0.006) are almost uniform.}
@@ -101,7 +103,7 @@ the intended edge and cloud devices.
 \end{figure}
 % Moved from the Introduction (2026-10-28); Figure 1 is now the
 % concept figure fig:system-paths.
-% Data: paper_fig1/heat_fig1.npz, heat_fig1_more.npz (+ _summary.json),
+% Data: paper_fig1/heat_fig1.npz, heat_fig1_more.npz (+ _summary.json), codes_fig1.npz,
 % heat_multi_summary.json (8 episodes); script scripts/pixel_vs_control.py.
 Image compression usually trades rate against visual distortion, as in
 learned hyperprior codecs~\cite{hyperprior}. A VLA policy has a different
