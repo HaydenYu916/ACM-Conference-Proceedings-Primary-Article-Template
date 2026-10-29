@@ -3,23 +3,29 @@
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{images/system-architecture.png}
+  \includegraphics[width=\textwidth]{images/system-architecture.pdf}
   \caption{System overview (primary $\pi_{0.5}$ configuration).
-  (a) Deployment: the robot turns camera images into an integer bitstream;
-  the cloud recovers the policy's visual tokens from the bitstream and runs
-  the frozen VLA policy, skipping the cloud visual encoder.
-  (b) Training: the jointly learned frontend (light vision encoder, feature
-  codec, and token decoder) is trained against the frozen policy's own
-  tokens and actions on clean images, with a rate penalty.}
-  \Description{Top panel: on the robot, multi-camera images pass through a
-  light vision encoder and a feature codec (feature head, quantization with temporal coding
-  against the previous quantized code, and an rANS encoder); an integer
-  bitstream crosses the network; in the cloud, rANS and temporal decoding,
-  a token decoder, and policy visual tokens feed a frozen VLA policy that also
-  receives language and robot state and returns an action chunk. Bottom
-  panel: a clean teacher path and the frontend path produce tokens
-  and actions that supply action supervision, token alignment,
-  and a rate penalty; only the frontend is updated.}
+  (a)~Deployment: on the robot, the light vision encoder and the feature
+  codec of the jointly learned frontend turn camera images into an
+  integer bitstream; \unsure{on inter uploads the codec is conditioned on
+  the previous codes, which both ends hold}. In the cloud, the token
+  decoder recovers the policy's visual tokens in place of its vision
+  encoder and projection, and the frozen policy returns an action chunk.
+  (b)~Training: the frontend is trained against the frozen policy's own
+  tokens and actions on clean images, with a rate term; only the frontend
+  is updated.}
+  \Description{Top panel: an edge box holds three camera views and the
+  jointly learned frontend: a light vision encoder s, then a feature codec
+  made of a feature head h, quantization Q and an rANS encoder, with a
+  "previous codes" box that stores the quantized codes and conditions the
+  feature head on inter uploads. A bitstream crosses to a cloud box with
+  rANS decoding, a token decoder g_s, policy tokens, and a frozen VLA
+  policy that also receives language and robot state; an action chunk
+  returns to the robot. Bottom panel: clean images feed a frozen vision
+  encoder plus projection and the jointly learned frontend; each path
+  produces tokens that feed the same frozen VLA policy and give actions;
+  token, action and rate terms form the training objective, and
+  gradients update only the frontend.}
   \label{fig:overview}
 \end{figure*}
 
