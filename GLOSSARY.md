@@ -19,3 +19,15 @@ _Avoid_: 将所有中间特征或压缩码都笼统称为策略视觉 token。
 **压缩码（compressed codes）**:
 视觉信息经过压缩得到的离散表示，是恢复策略视觉 token 的依据。
 _Avoid_: 与恢复后的策略视觉 token 混用。
+
+**轻量视觉编码器（light vision encoder, $s$）**:
+机器人上运行的视觉编码器，由原视觉塔蒸馏初始化，之后随前端一起训练。
+_Avoid_: student tower、student trunk、distilled tower（正文不再使用；"distilled/student" 只在说明初始化方式时出现一次）。
+
+**特征 codec（feature codec）**:
+机器人上把编码器特征变成整数码流的部分：特征头 $h$、量化 $Q$、时间编码与 rANS；云端有对应的熵解码与时间解码。
+_Avoid_: 用 feature encoder 单独指代整个 codec。
+
+**token 解码器（token decoder, $g_s$）**:
+云端把压缩码直接恢复为策略视觉 token 的网络，即学习压缩里的 synthesis transform。
+_Avoid_: feature decoder。

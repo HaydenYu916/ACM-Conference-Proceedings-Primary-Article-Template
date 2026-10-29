@@ -8,17 +8,18 @@
   (a) Deployment: the robot turns camera images into an integer bitstream;
   the cloud recovers the policy's visual tokens from the bitstream and runs
   the frozen VLA policy, skipping the cloud visual encoder.
-  (b) Training: the student tower and codec are trained against the frozen
-  policy's own tokens and actions on clean images, with a rate penalty.}
+  (b) Training: the jointly learned frontend (light vision encoder, feature
+  codec, and token decoder) is trained against the frozen policy's own
+  tokens and actions on clean images, with a rate penalty.}
   \Description{Top panel: on the robot, multi-camera images pass through a
-  student visual tower, feature encoder, quantization with temporal coding
-  against the previous quantized code, and an rANS encoder; an integer
+  light vision encoder and a feature codec (feature head, quantization with temporal coding
+  against the previous quantized code, and an rANS encoder); an integer
   bitstream crosses the network; in the cloud, rANS and temporal decoding,
-  a feature decoder, and visual tokens feed a frozen VLA policy that also
+  a token decoder, and policy visual tokens feed a frozen VLA policy that also
   receives language and robot state and returns an action chunk. Bottom
-  panel: a clean teacher path and the student-plus-codec path produce tokens
+  panel: a clean teacher path and the frontend path produce tokens
   and actions that supply action supervision, token alignment,
-  and a rate penalty; only the student and codec are updated.}
+  and a rate penalty; only the frontend is updated.}
   \label{fig:overview}
 \end{figure*}
 
@@ -34,15 +35,16 @@ robot, sends a compact bitstream, and removes visual encoding from the
 cloud for the primary configuration, while the policy weights stay unchanged.
 
 \paragraph{Pipeline.}
-Figure~\ref{fig:overview}a shows the deployed pipeline. On the robot, a
-compact student tower distilled from the policy's visual encoder extracts
-features from each camera image, and a feature encoder and quantizer map
-them to integer codes. Each code is predicted from the code sent at the
-previous upload, except at periodic intra frames, and the residual is
-entropy-coded with integer rANS. In the cloud, the receiver reverses the
-entropy and temporal coding to recover the codes exactly, and a feature
-decoder turns them into visual tokens that replace the output of the
-policy's visual encoder. The frozen policy consumes these tokens together
+Figure~\ref{fig:overview}a shows the deployed pipeline. The three trained
+parts form one jointly learned frontend. On the robot, a \emph{light vision
+encoder}, initialized by distillation from the policy's visual encoder,
+extracts features from each camera image, and a \emph{feature codec} maps
+them to integer codes. \unsure{Each code is predicted from the code sent at
+the previous upload, except at periodic intra frames, and the residual is
+entropy-coded with integer rANS.} In the cloud, the receiver reverses the
+entropy and temporal coding to recover the codes exactly, and a
+\emph{token decoder} turns them into policy visual tokens that replace the
+output of the policy's visual encoder. The frozen policy consumes these tokens together
 with the language instruction and robot state, which bypass the codec, and
 returns an action chunk.
 
@@ -51,8 +53,7 @@ The design must solve three problems.
 \paragraph{Preserving actions rather than appearance.}
 Faithful reconstruction of images or features does not guarantee that the
 policy acts the same (\S\ref{sec:bg-align}). We therefore supervise the
-student tower and codec with the frozen policy's own outputs on clean
-images. An action term supervises the frozen policy under recovered tokens
+frontend with the frozen policy's own outputs on clean images. An action term supervises the frozen policy under recovered tokens
 using clean-policy action targets, a token term aligns the tokens
 themselves, and a rate term controls the coding budget
 (Figure~\ref{fig:overview}b, \S\ref{sec:design-objective}).
@@ -60,16 +61,19 @@ themselves, and a rate term controls the coding budget
 \paragraph{Keeping robot computation small.}
 Running the policy's visual encoder at every upload adds substantial
 latency on resource-constrained robot hardware. The robot instead runs the
-distilled student tower, trained jointly with the codec, so its work is
-limited to the student tower, the feature encoder, and entropy coding
+light vision encoder, trained jointly with the rest of the frontend, so
+its work is limited to that encoder and the feature codec
 (\S\ref{sec:design-frontend}).
 
+% PENDING (2026-10-30): A100 reports S5 uses conditional inter coding
+% (symbols sent to rANS = codes, no explicit residual). Confirm the inter
+% mechanism before finalizing the red text here, Eq. dpcm in Sec. 4.3, and the figures.
 \paragraph{Temporal coding without a decoder on the robot.}
 Video codecs predict each frame from a reconstructed reference, so the
 encoder also runs the decoder. For a learned codec, this would place a
 neural decoder on the robot, and floating-point differences between the
-robot and the cloud could desynchronize the reference. We instead predict
-in the space of quantized codes, which both ends hold exactly, and use
+robot and the cloud could desynchronize the reference. \unsure{We instead
+predict in the space of quantized codes, which both ends hold exactly,} and use
 integer-only rANS to produce identical bitstreams from the same symbols
 and coding tables on ARM and x86 hosts
 (\S\ref{sec:design-temporal}).

@@ -42,16 +42,17 @@ scalar quantization $Q$:
 The transform has two stages. The direct choice for its first stage
 would be the original tower $T$ itself, but running $T$ on the robot at
 every upload is too slow for an edge device (\S\ref{sec:bg-cost}).
-We therefore use a student trunk $s$ with 12 transformer layers of width
-768 and about 85 million parameters, compared with 415 million for the
-teacher path $P \circ T$. A bottleneck head $h$, a small transformer,
-maps the trunk features to a 256-dimensional latent per token, and $Q$
+We therefore use a \emph{light vision encoder} $s$, a student with 12
+transformer layers of width 768 and about 85 million parameters, compared
+with 415 million for the teacher path $P \circ T$. The \emph{feature codec}
+begins with a bottleneck head $h$, a small transformer that maps the
+encoder features to a 256-dimensional latent per token, and $Q$
 rounds each latent value to one of five levels with step size 4 and
 bound 8. Every camera stream passes through $g_a$; no camera is sent as
 an image.
 
 \paragraph{Cloud synthesis transform.}
-In the cloud, a synthesis transform $g_s$ with four transformer layers
+In the cloud, a \emph{token decoder}, the synthesis transform $g_s$ with four transformer layers
 of width 512 maps the recovered codes to policy tokens,
 \begin{equation}
   \hat{z}_t^{(c)} = g_s\big(y_t^{(c)}\big),
@@ -63,13 +64,13 @@ image is reconstructed at any point in the deployed path. Because $g_s$
 targets one policy's interface, it is trained per policy.
 
 \paragraph{One trainable path.}
-The student trunk is initialized by distillation from the teacher path
-$P \circ T$, but it is not frozen afterwards. The trunk $s$, the head $h$, and the decoder $g_s$
+The light vision encoder is initialized by distillation from the teacher
+path $P \circ T$, but it is not frozen afterwards. The encoder $s$, the head $h$, and the token decoder $g_s$
 are updated together in every end-to-end training stage, with gradients
 passing through the frozen policy (\S\ref{sec:design-objective}). In
-the final LIBERO model, the trunk accounts for 85 million of the 105.2
-million trainable parameters. The trunk thus acts as the feature
-extractor of the codec rather than as a fixed copy of the teacher, in the
+the final LIBERO model, $s$ accounts for 85 million of the 105.2
+million trainable parameters. The light vision encoder thus acts as the
+feature extractor of the codec rather than as a fixed copy of the teacher, in the
 same way that a learned image codec may initialize its analysis
 transform from a pretrained network before training the whole model.
 
@@ -145,12 +146,12 @@ Section~\ref{sec:impl-backbones} lists the weights used for each policy.
 
 \paragraph{Staged schedule.}
 Training proceeds in three end-to-end stages, each initialized from the
-previous one. The student trunk is first initialized by distillation from
+previous one. The light vision encoder $s$ is first initialized by distillation from
 the teacher path $P \circ T$. Stage S1 trains the whole frontend without
 quantization. Stage F1 adds quantization and the rate terms for intra
 uploads. Stage F2 adds temporal coding (\S\ref{sec:design-temporal}) and
 rolls through intra and inter uploads in the order used at deployment.
-The student trunk is updated in every stage. For OpenVLA-OFT, the action
+The encoder $s$ is updated in every stage. For OpenVLA-OFT, the action
 term instead uses an L1 loss on the clean policy's action chunks, matching
 that policy's action parameterization (\S\ref{sec:impl-backbones}).
 

@@ -251,13 +251,13 @@ visual towers. These component measurements use synthetic motion
 frames for video decoding and are not a substitute for a complete
 same-input deployment comparison.
 
-For $\pi_{0.5}$, a recorded student-tower measurement is 11.0\,ms
+For $\pi_{0.5}$, a recorded light-vision-encoder measurement is 11.0\,ms
 versus 39.9\,ms for the original tower. The non-distilled codec variant
 succeeds in 1,918 LIBERO episodes versus 1,934 for the main configuration.
 % TODO(author): state precisely what this variant changes. It keeps the
 % original tower frozen (--freeze-tower), so it differs from the main
 % configuration both in the tower and in whether the tower is trained.
-This diagnostic does not isolate all effects of student training, codec
+This diagnostic does not isolate all effects of encoder distillation, codec
 training, and runtime capture. The end-to-end encoding measurement in
 Table~\ref{tab:replay} is therefore the appropriate deployment cost.
 Likewise, the unquantized RoboCasa variant gives 290 successes versus

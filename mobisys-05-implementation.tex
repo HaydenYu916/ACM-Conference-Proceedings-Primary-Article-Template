@@ -1,10 +1,10 @@
 \section{Implementation}
 \label{sec:implementation}
 \subsection{Edge and Cloud Runtime}
-The primary deployment runs the student visual tower and feature codec on
+The primary deployment runs the light vision encoder and feature codec on
 a Jetson AGX Orin and the $\pi_{0.5}$ policy on an A40 cloud server.
-The robot-side pipeline prepares each camera input, executes the student
-and encoder, and serializes the entropy-coded payload. The server
+The robot-side pipeline prepares each camera input, executes the light
+vision encoder and feature codec, and serializes the entropy-coded payload. The server
 reconstructs visual tokens and supplies them through the frozen policy's
 visual-input interface. The integration uses asynchronous LeRobot
 inference; it changes the visual transport path rather than introducing
@@ -13,7 +13,7 @@ a new action scheduler.
 In the recorded SO-101 component benchmark, two camera images are resized
 from $640\times480$ to $224\times168$ before the codec. This common resize
 is applied to every transport mode and is outside the reported codec
-timing boundary. The student and codec execute through a CUDA Graph in
+timing boundary. The light vision encoder and feature codec execute through a CUDA Graph in
 the deployed edge path. The compiled cloud $\pi_{0.5}$ implementation uses
 fixed buffers for visual-token injection.
 
@@ -26,7 +26,7 @@ camera, and replaces the original tower and projection. OpenVLA-OFT
 consumes features from two visual towers, DINOv2 and
 SigLIP~\cite{openvla,dinov2,siglip}, concatenated along the channel
 dimension into 2,176-dimensional features (1,024 + 1,152), 256 per
-camera. The student trunk, with 12 layers of width 1,024 and its own
+camera. The light vision encoder, with 12 layers of width 1,024 and its own
 linear output layer to 2,176 dimensions, replaces both towers. As for
 $\pi_{0.5}$, \unsure{$g_s$ recovers the tokens after OFT's projection, so the
 cloud runs neither the visual towers nor the projection}.

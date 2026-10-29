@@ -85,15 +85,16 @@ complete request latency, and physical task outcomes.
 
 Our design combines policy supervision, a distilled visual tower, and
 temporal coding over quantized features. Clean-input tokens and actions
-from the original policy supervise the trainable student and codec while
-the policy weights stay frozen. A compact student reduces visual
-encoding work relative to running the original tower on the robot,
+from the original policy supervise the jointly learned frontend while
+the policy weights stay frozen. A light vision encoder, distilled from the
+original tower, reduces visual encoding work relative to running that
+tower on the robot,
 following the use of teacher supervision
 for model compression~\cite{distillation}. Quantized code references
 support temporal prediction, and integer rANS turns the resulting symbols
 into a deployable bitstream~\cite{ans}. The cloud reconstructs policy
 tokens directly. We implement the main path for $\pi_{0.5}$ and adapt
-the student and decoder interface to OpenVLA-OFT. Each policy requires
+the light vision encoder and token decoder to OpenVLA-OFT. Each policy requires
 its own training; the design does not assume that a single codec can
 serve arbitrary VLA backbones.
 
