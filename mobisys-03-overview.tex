@@ -25,8 +25,9 @@
   returns to the robot. Bottom panel: clean images feed a frozen vision
   encoder plus projection and the jointly learned frontend; each path
   produces tokens that feed the same frozen VLA policy and give actions;
-  token, action and rate terms form the training objective, and
-  gradients update only the frontend.}
+  a token loss compares the two token sets, an action loss compares the
+  two action sets, and a rate loss applies to the frontend's codes; their
+  sum is the training loss, and gradients update only the frontend.}
   \label{fig:overview}
 \end{figure*}
 
