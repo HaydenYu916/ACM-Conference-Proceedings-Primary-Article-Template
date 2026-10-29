@@ -40,28 +40,27 @@
 \end{scope}
 \end{scope}
 
-% ---------- (b) quantized-code reference ----------
+% ---------- (b) quantized-code condition (ours) ----------
 \begin{scope}[xshift=3.15cm]
 \node[nnb] (b1) at (0,\rA) {$g_a$};
 \node[pb]  (b2) at (0,\rB) {$Q$};
-\node[op]  (b3) at (0,\rC) {$-$};
-\node[pb]  (b4) at (0,\rD) {rANS};
-\node[pb]  (b5) at (\side,\rC) {$y_{t-1}$};
-\coordinate (b6) at (0,\rE);
-\draw[->] (b1)--(b2); \draw[->] (b2)--(b3); \draw[->] (b3)--(b4);
+\node[pb]  (b4) at (0,\rC) {rANS};
+\node[pb]  (b5) at (\side,\rA) {$y_{t-1}$};
+\coordinate (b6) at (0,\rD);
+\draw[->] (b1)--(b2); \draw[->] (b2)--(b4);
 \draw[->] (b4)--(b6) node[right, font=\scriptsize, inner sep=1pt]{cloud};
-\draw[->] (b2.east) -| node[pos=0.25, above, font=\scriptsize]{store} (b5.north);
-\draw[->] (b5)--(b3);
-\coordinate (bL) at (-0.55,\rA); \coordinate (bR) at (\side+0.62,\rA);
+\draw[->] (b2.east) -| node[pos=0.25, below, font=\scriptsize]{store} (b5.south);
+\draw[->] (b5)--(b1);
+\coordinate (bL) at (-0.55,\rA); \coordinate (bR) at (\side+0.62,\rA); \coordinate (bB) at (0,\rD);
 \begin{scope}[on background layer]
-\node[pan, fit=(b1)(b4)(b5)(bL)(bR)] (pnb) {};
+\node[pan, fit=(b1)(b4)(b5)(bL)(bR)(bB)] (pnb) {};
 \end{scope}
 \end{scope}
 
 % sub-captions aligned on one baseline
 \path (pa.south) ++(0,-0.5) coordinate (capy);
 \node[subcap] at (pa.south |- capy) {(a) Reconstructed\\ reference};
-\node[subcap] at (pnb.south |- capy) {(b) Quantized-code\\ reference (ours)};
+\node[subcap] at (pnb.south |- capy) {(b) Quantized-code\\ condition (ours)};
 
 \end{tikzpicture}
 \end{document}

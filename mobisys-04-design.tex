@@ -58,7 +58,10 @@ of width 512 maps the recovered codes to policy tokens,
   \hat{z}_t^{(c)} = g_s\big(y_t^{(c)}\big),
   \label{eq:synthesis}
 \end{equation}
-which enter the policy in place of $P(T(\cdot))$. The cloud therefore
+which enter the policy in place of $P(T(\cdot))$. The token decoder also
+receives the robot's proprioceptive state, which every request already
+carries for the policy, so it adds nothing to the upload; on LIBERO the
+encoder receives it as well. The cloud therefore
 runs neither an image decoder nor the original visual tower, and no
 image is reconstructed at any point in the deployed path. Because $g_s$
 targets one policy's interface, it is trained per policy.
@@ -158,64 +161,69 @@ that policy's action parameterization (\S\ref{sec:impl-backbones}).
 \subsection{Decoder-Free Temporal Coding at the Edge}
 \label{sec:design-temporal}
 Consecutive uploads from the same camera overlap substantially, so each
-code can be predicted from the previous one. We exploit this redundancy with
-predictive coding in the space of quantized codes, and then convert the
-resulting integer symbols into a bitstream with rANS.
+code can be coded given the previous one. We exploit this redundancy by
+conditioning both ends of the frontend on the previous quantized codes, and
+then convert the resulting integer symbols into a bitstream with rANS.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.7\columnwidth]{images/temporal-reference.pdf}
-  \caption{Predicting from the quantized code removes the neural decoder
-  from the robot. (a) Predicting from a
-  reconstructed reference requires a neural decoder on the robot at every
-  upload. (b) Predicting from the previous quantized code $y_{t-1}$ only
-  requires storing an integer copy, which the cloud also keeps. Orange
-  boxes are neural modules; blue boxes are non-neural.}
+  \caption{Conditioning on the quantized code removes the neural decoder
+  from the robot. (a) Coding against a reconstructed reference requires a
+  neural decoder on the robot at every upload. (b) Conditioning on the
+  previous quantized code $y_{t-1}$ only requires storing a copy of the
+  code just sent, which the cloud also keeps. Orange boxes are neural
+  modules; blue boxes are non-neural.}
   \Description{Two small top-to-bottom block diagrams of the robot side,
   side by side. In (a), a reference produced by a neural decoder is
   subtracted from the output of g_a before Q and rANS; the quantized output
   also feeds the decoder. In (b), g_a and Q produce a code; the previous
-  code y_{t-1}, stored after Q, is subtracted before rANS. Neural modules
+  code y_{t-1}, stored after Q, is fed back into g_a. Neural modules
   are shaded orange and non-neural modules blue.}
   \label{fig:temporal-reference}
 \end{figure}
 
-\paragraph{Prediction in the code domain.}
+\paragraph{Conditioning on the previous code.}
 We organize uploads into groups of pictures (GOPs) of $G$ uploads. The
-first upload of each GOP is an intra upload that transmits the code $y_t$
-of Equation~\ref{eq:analysis} directly. Every later upload is an inter upload that transmits only the
-residual against the code of the previous upload,
+first upload of each GOP is an intra upload coded as in
+Equation~\ref{eq:analysis}. Every later upload is an inter upload, for
+which both the robot and the cloud take the dequantized codes of the
+previous upload as an additional input,
 \begin{equation}
-  r_t = y_t - y_{t-1}, \qquad y_t = y_{t-1} + r_t ,
-  \label{eq:dpcm}
+  y_t = Q\big(g_a(x_t \mid y_{t-1})\big), \qquad
+  \hat{z}_t = g_s(y_t \mid y_{t-1}) .
+  \label{eq:cond}
 \end{equation}
-where the second identity is evaluated by the receiver. Because $y_t$
-and $y_{t-1}$ are integer codes, the residual is an integer and the
-receiver recovers $y_t$ exactly. The primary $\pi_{0.5}$ configuration
-uses $G=16$ and the OpenVLA-OFT configuration uses $G=8$. These
-intervals count policy uploads, not camera frames or actuator steps.
+In $g_s$, a linear layer maps $y_{t-1}$ to the hidden width and adds it
+to the hidden features. The symbols sent are the codes $y_t$ themselves;
+there is no separate residual to invert. The primary $\pi_{0.5}$
+configuration uses $G=16$ and the OpenVLA-OFT configuration uses $G=8$.
+These intervals count policy uploads, not camera frames or actuator steps.
+% TODO(author): confirm that the OpenVLA-OFT configuration uses the same
+% conditional inter coding (confirmed for pi0.5 LIBERO fx2x3 and RoboCasa S5).
 
 \paragraph{Why the code is the reference.}
-Video codecs predict each frame from a reconstructed reference, so the
+Video codecs code each frame against a reconstructed reference, so the
 encoder must also run the decoder
 (Figure~\ref{fig:temporal-reference}a). In our setting, a reconstructed
 reference would come from a neural decoder, which the robot would then
 have to execute at every upload. Floating-point differences between robot
 and cloud hardware could also make the two references diverge. Using the
-quantized code $y_{t-1}$ as the reference removes both problems. The robot keeps its reference by storing the
+quantized code $y_{t-1}$ as the condition removes both problems. The robot keeps its reference by storing the
 code it has just sent, without any neural decoding, and both endpoints
 hold bit-identical references, so no drift accumulates within a GOP
 (Figure~\ref{fig:temporal-reference}b).
-The receiver inverts Equation~\ref{eq:dpcm} first and only then applies
-$g_s$ (Equation~\ref{eq:synthesis}).
+The receiver passes the same $y_{t-1}$ to $g_s$
+(Equation~\ref{eq:cond}), so its output on the robot's codes is
+deterministic and needs no extra signalling.
 Training stage F2 (\S\ref{sec:design-objective}) rolls through intra and
 inter uploads in this order, so the frontend is trained under the same
 reference states it encounters at deployment.
 
 \paragraph{Integer bitstream.}
-We entropy-code intra codes and inter residuals with static
-rANS~\cite{ans}, using a 32-bit state and integer frequency tables
-normalized to 15 bits. The coder performs no floating-point arithmetic,
+We entropy-code the codes with static rANS~\cite{ans}, using separate
+frequency tables for intra and inter uploads, a 32-bit state, and integer
+frequency tables normalized to 15 bits. The coder performs no floating-point arithmetic,
 so the same symbols and tables produce byte-identical streams on ARM
 robot hardware and x86 servers. The rate term used in training is an
 estimate from the entropy model; the $\pi_{0.5}$ payloads reported in

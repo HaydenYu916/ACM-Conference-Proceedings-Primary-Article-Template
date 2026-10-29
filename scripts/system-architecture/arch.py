@@ -2,7 +2,7 @@
 """Fig. 2 (system architecture), same visual language as Figure 1. Usage: arch.py OUT.html thumbs.json"""
 import sys
 exec(open(__file__.replace("arch.py", "helpers.py")).read())
-W, H = 1504, 640
+W, H = 1504, 586
 SNOW = ('<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6DB0EE" stroke-width="1.8" '
         'stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px;margin-right:6px">'
         + "".join(f'<g transform="rotate({60*k} 12 12)"><path d="M12 12 V2.5 M9.6 4.6 L12 7 L14.4 4.6"/></g>'
@@ -45,7 +45,7 @@ text(316, 110, 200, "Feature codec", 17, "#0D366B", 700)
 box(318, yc - 34, 118, 68, "Feature<br>head <i>h</i>", "ours", fs=19)
 box(462, yc - 34, 104, 68, "Quantize<br><i>Q</i>", "ours", fs=19)
 box(592, yc - 34, 112, 68, "rANS<br>encode", "ours", fs=19)
-box(426, 234, 176, 40, "previous codes <i>&#375;</i><sub><i>t</i>&minus;1</sub>", "grey", fs=17)
+box(426, 234, 176, 40, "previous codes <i>y</i><sub><i>t</i>&minus;1</sub>", "grey", fs=18)
 poly([(92, yc), (123, yc)])                                   # frames -> encoder
 poly([(284, yc), (317, yc)])
 poly([(436, yc), (461, yc)])
@@ -65,7 +65,10 @@ for k in range(4):
 text(CX + 326, yc + 40, 80, "policy<br>tokens", 15, "#5A2C05", 600, "center")
 box(CX + 414, yc - 46, 170, 92, SNOW + "VLA<br>policy", "vla", fs=22)
 box(CX + 420, 56, 158, 44, "language + state", "grey", fs=17)
-text(CX + 160, 230, 170, "replaces vision<br>encoder + projection", 15, "#55606E", 600, "center", "; font-style:italic")
+box(CX + 20, 234, 176, 40, "previous codes <i>y</i><sub><i>t</i>&minus;1</sub>", "grey", fs=18)
+poly([(CX + 79, yc + 34), (CX + 79, 233)], RET)
+poly([(CX + 196, 254), (CX + 242, 254), (CX + 242, yc + 41)], RET)
+text(CX + 262, 280, 330, "replaces vision encoder + projection", 15, "#55606E", 600, "left", "; font-style:italic")
 poly([(CX + 138, yc), (CX + 161, yc)])
 poly([(CX + 322, yc), (CX + 343, yc)])
 poly([(CX + 388, yc), (CX + 413, yc)])
@@ -75,20 +78,20 @@ poly([(CX + 584, yc), (CX + 612, yc), (CX + 612, 326), (63, 326), (63, 82 + 3 * 
 text(560, 330, 400, "action chunk", 17, "#55606E", 600, "center", "; font-style:italic")
 
 # ---------------- (b) training
-TY = 372
+TY = 364
 text(16, TY - 12, 700, "(b) Training (policy frozen; only the frontend is updated)", 22, "#1C1B19", 700)
-r1, r2 = TY + 62, TY + 172                     # row centres: teacher, frontend
+r1, r2 = TY + 56, TY + 140                     # row centres: teacher, frontend
 out.append(f'<img src="data:image/jpeg;base64,{TH["cam0"]}" style="position:absolute; left:34px; top:{(r1+r2)//2-34}px; '
            f'width:68px; height:68px; border-radius:4px; box-shadow:0 0 0 1.5px #8F8A80; object-fit:cover">')
-text(16, (r1 + r2) // 2 + 38, 104, "clean images", 15, "#55606E", 600, "center")
-box(170, r1 - 32, 250, 64, SNOW + "Vision encoder + projection", "venc", fs=19)
-box(170, r2 - 32, 250, 64, "Jointly learned frontend", "ours", fs=19)
+text(16, (r1 + r2) // 2 + 36, 104, "clean images", 15, "#55606E", 600, "center")
+box(170, r1 - 28, 250, 56, SNOW + "Vision encoder + projection", "venc", fs=19)
+box(170, r2 - 28, 250, 56, "Jointly learned frontend", "ours", fs=19)
 poly([(102, (r1 + r2) // 2), (130, (r1 + r2) // 2), (130, r1), (169, r1)])
 poly([(130, (r1 + r2) // 2), (130, r2), (169, r2)])
 pill(520, r1, "tokens <i>z</i>")
 pill(520, r2, "tokens <i>&#7825;</i>", BLUE)
-box(620, r1 - 32, 150, 64, SNOW + "VLA policy", "vla", fs=19)
-box(620, r2 - 32, 150, 64, SNOW + "VLA policy", "vla", fs=19)
+box(620, r1 - 28, 150, 56, SNOW + "VLA policy", "vla", fs=19)
+box(620, r2 - 28, 150, 56, SNOW + "VLA policy", "vla", fs=19)
 pill(860, r1, "actions <i>a</i>")
 pill(860, r2, "actions <i>&acirc;</i>", BLUE)
 poly([(420, r1), (468, r1)]); poly([(572, r1), (619, r1)]); poly([(770, r1), (806, r1)])
@@ -96,15 +99,15 @@ poly([(420, r2), (468, r2)], BLUE); poly([(572, r2), (619, r2)], BLUE); poly([(7
 # loss box
 LX, LW = 980, 330
 out.append(f'<div style="position:absolute; left:{LX}px; top:{r1-36}px; width:{LW}px; height:{r2-r1+72}px; box-sizing:border-box; '
-           f'border:1.8px solid #5B6472; border-radius:12px; background:#FFFFFF; padding:14px 18px; font-size:20px; '
-           f'line-height:30px; color:#1F2937; font-weight:600">'
-           f'<div style="font-weight:700; margin-bottom:4px">Training objective</div>'
+           f'border:1.8px solid #5B6472; border-radius:12px; background:#FFFFFF; padding:8px 18px; font-size:19px; '
+           f'line-height:25px; color:#1F2937; font-weight:600">'
+           f'<div style="font-weight:700; margin-bottom:2px">Training objective</div>'
            f'<div>token: &nbsp;<i>&#7825;</i> vs. <i>z</i></div><div>action: &nbsp;<i>&acirc;</i> vs. <i>a</i></div>'
            f'<div>rate: &nbsp;bits of the codes</div></div>')
 poly([(914, r1), (979, r1)]); poly([(914, r2), (979, r2)], BLUE)
 # gradient back to the frontend
-poly([(LX + LW / 2, r2 + 37), (LX + LW / 2, r2 + 62), (295, r2 + 62), (295, r2 + 33)], PURPLE, dash="6 4")
-text(560, r2 + 66, 360, "gradients update the frontend only", 16, PURPLE, 700, "center")
+poly([(LX + LW / 2, r2 + 37), (LX + LW / 2, r2 + 56), (295, r2 + 56), (295, r2 + 29)], PURPLE, dash="6 4")
+text(560, r2 + 58, 360, "gradients update the frontend only", 16, PURPLE, 700, "center")
 # legend
 text(1336, r1 - 34, 160, SNOW + "frozen", 17, "#3F4A5A", 600)
 out.append(f'<div style="position:absolute; left:1336px; top:{r1+2}px; width:26px; height:18px; border-radius:4px; '
