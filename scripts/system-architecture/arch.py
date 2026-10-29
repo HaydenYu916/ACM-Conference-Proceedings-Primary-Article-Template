@@ -51,62 +51,96 @@ def pill(cx, cy, html, color=INK, fs=13):
 ICON_CHIP = CHIP_ICON.replace('width="22" height="22"', 'width="18" height="18"')
 ICON_CLOUD = CLOUD_ICON.replace('width="30" height="20"', 'width="22" height="15"')
 
-# ------------------------------------------------------------------ (a) deployment, 470 x 384
+# ------------------------------------------------------------------ (a) deployment, 476 x 474
+GREEN = ("#D5ECCF", "#4E9A44")
 def panel_a(ox, oy):
     text(ox, oy, 460, "(a) Deployment", 17, "#1C1B19", 700)
-    X0, X1 = ox + 62, ox + 352
-    CM = (X0 + X1) // 2
-    # cameras
+    X0, X1 = ox + 50, ox + 346
+    RC = ox + 362                                   # right column
+    CH, IHH = 70, 38                                # card height, inner-strip height
+    def strip(x, y, w, split, kind="ours"):
+        inner(x, y, w, IHH, split, kind)
+    # three robot cameras merge into one input
     for k, c in enumerate(["cam0", "cam2", "cam1"]):
-        out.append(f'<img src="data:image/jpeg;base64,{TH[c]}" style="position:absolute; left:{ox}px; top:{oy+38+k*44}px; '
-                   f'width:40px; height:40px; border-radius:3px; box-shadow:0 0 0 1.3px #8F8A80; object-fit:cover">')
-    # edge card
-    EY, EH = oy + 34, 98
-    card(X0, EY, X1 - X0, EH, "Edge: jointly learned frontend", icon=ICON_CHIP)
-    IY, IH = EY + 26, 62
-    SP = X0 + 10 + 148
-    inner(X0 + 10, IY, X1 - X0 - 20, IH, SP)
-    text(X0 + 10, IY + 4, SP - X0 - 10, "Light vision encoder <i>s</i>", 13.5, NAVY, 700, "center")
-    cells((X0 + 10 + SP) / 2, IY + 36, 6, 15, 15)
-    text(SP, IY + 4, X1 - 10 - SP, "Feature codec", 13.5, NAVY, 700, "center")
-    text(SP, IY + 21, X1 - 10 - SP, "<i>h</i> &middot; <i>Q</i> &middot; rANS", 12, "#3F5E86", 600, "center")
-    cells((SP + X1 - 10) / 2, IY + 42, 4, 8, 8)
-    ye = IY + IH // 2
-    poly([(ox + 41, ye), (X0 - 1, ye)])
-    # previous codes, edge
-    def prev(yc):
-        cells(ox + 421, yc - 6, 4, 13, 12, fill="#E4E7EB", bd="#8C949E")
-        label(ox + 372, yc + 9, 100, "previous<br>codes <i>y</i><sub><i>t</i>&minus;1</sub>", 12, "#55606E", "center", False)
-        poly([(X1 + 9, yc - 4), (ox + 390, yc - 4)], RET)
-        poly([(ox + 390, yc + 4), (X1 + 10, yc + 4)], RET)
-    prev(ye)
-    # bitstream down to the cloud
-    TY, TH_ = oy + 176, 98
-    poly([(CM, EY + EH + 9), (CM, TY - 1)], BLUE)
-    label(CM + 6, EY + EH + 14, 120, "bitstream", 13, BLUE, "left", False)
-    # token decoder card
-    card(X0, TY, X1 - X0, TH_, "Cloud: token decoder", icon=ICON_CLOUD)
-    TIY = TY + 26
-    TSP = X0 + 10 + 100
-    inner(X0 + 10, TIY, X1 - X0 - 20, IH, TSP)
-    text(X0 + 10, TIY + 4, TSP - X0 - 10, "rANS decode", 13.5, NAVY, 700, "center")
-    cells((X0 + 10 + TSP) / 2, TIY + 36, 4, 8, 8)
-    text(TSP, TIY + 4, X1 - 10 - TSP, "<i>g<sub>s</sub></i>", 15, NAVY, 700, "center")
-    cells((TSP + X1 - 10) / 2, TIY + 30, 6, 15, 15)
-    prev(TIY + IH // 2)
-    # policy tokens -> frozen VLA policy
-    VY, VH = oy + 316, 56
-    poly([(CM, TY + TH_ + 9), (CM, VY - 1)])
-    cells(CM + 44, TY + TH_ + 17, 4, 13, 10, fill="#FDE2C8", bd="#DC7A2E")
-    label(CM + 80, TY + TH_ + 12, 100, "policy tokens", 12.5, "#5A2C05", "left", False)
-    card(X0, VY, X1 - X0, VH, None, kind="vla")
-    text(X0, VY + 16, X1 - X0, SNOW + "VLA policy (frozen)", 16, "#5A2C05", 700, "center")
-    box(ox + 372, VY + 6, 92, 44, "language<br>+ state", "grey", fs=12.5)
-    poly([(ox + 371, VY + 28), (X1 + 9, VY + 28)])
-    # action chunk back to the robot
-    poly([(X0 - 1, VY + 28), (ox + 20, VY + 28), (ox + 20, oy + 38 + 3 * 44 - 3)], RET, dash="6 3 1.5 3")
-    out.append(f'<div style="position:absolute; left:{ox+26}px; top:{oy+262}px; transform:rotate(-90deg); transform-origin:left top; '
-               f'white-space:nowrap; font-size:12.5px; font-weight:600; font-style:italic; color:#55606E">action chunk</div>')
+        out.append(f'<img src="data:image/jpeg;base64,{TH[c]}" style="position:absolute; left:{ox}px; top:{oy+28+k*29}px; '
+                   f'width:27px; height:27px; border-radius:3px; box-shadow:0 0 0 1.2px #8F8A80; object-fit:cover">')
+    # ---- edge card
+    EY = oy + 30
+    card(X0, EY, X1 - X0, CH, "Edge: jointly learned frontend", fs=14.5, icon=ICON_CHIP)
+    IY = EY + 25
+    SP = X0 + 10 + 156
+    strip(X0 + 10, IY, X1 - X0 - 20, SP)
+    text(X0 + 10, IY + 2, SP - X0 - 10, "Light vision encoder <i>s</i>", 13, NAVY, 700, "center")
+    cells((X0 + 10 + SP) / 2, IY + 21, 7, 13, 11)
+    text(SP, IY + 2, X1 - 10 - SP, "Feature codec", 13, NAVY, 700, "center")
+    cells(SP + 22, IY + 23, 4, 7, 7)
+    text(SP + 50, IY + 19, 80, "<i>h</i> &middot; <i>Q</i> &middot; rANS", 11.5, "#3F5E86", 600)
+    ye = EY + CH // 2
+    for k in range(3):
+        cy = oy + 28 + k * 29 + 13
+        poly([(ox + 28, cy), (ox + 36, cy)], head=False)
+    poly([(ox + 36, oy + 41), (ox + 36, oy + 99)], head=False)
+    poly([(ox + 36, ye), (X0 - 1, ye)])
+    def prev(yc, xin):
+        cells(RC + 56, yc - 12, 4, 12, 11, fill="#E4E7EB", bd="#8C949E")
+        label(RC + 6, yc + 1, 100, "previous codes <i>y</i><sub><i>t</i>&minus;1</sub>", 11.5, "#55606E", "center", False)
+        poly([(xin, yc - 10), (RC + 26, yc - 10)], RET)
+        poly([(RC + 26, yc - 3), (xin + 1, yc - 3)], RET)
+    prev(ye, X1 + 9)
+    # ---- bitstream: from the codec half down to the rANS-decode half
+    TY = EY + CH + 42
+    TSP = X0 + 10 + 104
+    xc = (SP + X1 - 10) // 2
+    xr = (X0 + 10 + TSP) // 2
+    ym = EY + CH + 24
+    poly([(xc, EY + CH + 9), (xc, ym), (xr, ym), (xr, TY - 1)], BLUE)
+    label(xr - 74, ym - 15, 70, "bitstream", 12.5, BLUE, "right", False)
+    # ---- cloud token decoder
+    card(X0, TY, X1 - X0, CH, "Cloud: token decoder", fs=14.5, icon=ICON_CLOUD)
+    TIY = TY + 25
+    strip(X0 + 10, TIY, X1 - X0 - 20, TSP)
+    text(X0 + 10, TIY + 2, TSP - X0 - 10, "rANS decode", 13, NAVY, 700, "center")
+    cells((X0 + 10 + TSP) / 2, TIY + 23, 4, 7, 7)
+    text(TSP, TIY + 2, X1 - 10 - TSP, "Synthesis <i>g<sub>s</sub></i> <span style=\"font-weight:600; color:#3F5E86\">(+ state)</span>", 13, NAVY, 700, "center")
+    cells((TSP + X1 - 10) / 2, TIY + 21, 7, 13, 11)
+    prev(TY + CH // 2, X1 + 9)
+    # ---- visual tokens -> policy; SigLIP + projection is not run
+    VY = TY + CH + 44
+    VSP = TSP
+    PT = (VSP + X1 - 10) // 2
+    poly([(PT, TY + CH + 9), (PT, VY - 1)])
+    cells(PT - 40, TY + CH + 20, 4, 10, 8, fill="#FDE2C8", bd="#DC7A2E")
+    label(PT + 7, TY + CH + 15, 110, "visual tokens", 12, "#5A2C05", "left", False)
+    out.append(f'<div style="position:absolute; left:{RC+2}px; top:{TY+CH+12}px; width:108px; height:24px; box-sizing:border-box; '
+               f'border:1.4px dashed #A8A39A; border-radius:6px; background:#FFFFFF; display:flex; align-items:center; '
+               f'justify-content:center; font-size:12px; font-weight:700; color:#7C838C; text-decoration:line-through">SigLIP + proj.</div>')
+    label(RC + 2, TY + CH + 36, 108, "not run in the cloud", 11, "#7C838C", "center")
+    # ---- pi0.5 policy
+    card(X0, VY, X1 - X0, CH, SNOW + "VLA policy (&pi;<sub>0.5</sub>, frozen)", kind="vla", fs=14.5)
+    VIY = VY + 25
+    strip(X0 + 10, VIY, X1 - X0 - 20, VSP, kind="vla")
+    text(X0 + 10, VIY + 2, VSP - X0 - 10, "Action expert", 13, "#5A2C05", 700, "center")
+    cells((X0 + 10 + VSP) / 2, VIY + 22, 4, 10, 10, kind="vla")
+    text(VSP, VIY + 2, X1 - 10 - VSP, "VLM backbone", 13, "#5A2C05", 700, "center")
+    cells((VSP + X1 - 10) / 2, VIY + 21, 8, 12, 11, kind="vla")
+    # language: instruction -> tokenizer -> VLM; state
+    box(RC + 2, VY + 4, 108, 24, "Tokenizer", "grey", fs=12.5)
+    poly([(RC + 1, VY + 16), (X1 + 9, VY + 16)])
+    out.append(f'<div style="position:absolute; left:{RC+2}px; top:{VY+42}px; width:108px; box-sizing:border-box; padding:2px 4px; '
+               f'border:1.3px solid #7A6FB0; border-radius:6px; background:#FFFFFF; font-size:11.5px; line-height:14px; '
+               f'font-style:italic; color:#3B356B; text-align:center">language instruction</div>')
+    poly([(RC + 56, VY + 41), (RC + 56, VY + 29)])
+    # action chunk -> robot -> cameras
+    AY = VY + CH + 26
+    ax = (X0 + 10 + VSP) // 2
+    poly([(ax, VY + CH + 9), (ax, AY - 8)], GREEN[1])
+    cells(ax, AY - 6, 6, 11, 11, fill=GREEN[0], bd=GREEN[1])
+    label(ax + 44, AY - 7, 100, "action chunk", 12, GREEN[1], "left", False)
+    poly([(ax - 44, AY), (ox + 42, AY)], GREEN[1])
+    out.append(ROBOT.replace('width="120" height="111"', 'width="44" height="41"').format(x=ox - 6, y=AY - 26))
+    poly([(ox + 14, AY - 28), (ox + 14, oy + 28 + 3 * 29 - 2)], RET)
+    box(RC + 30, AY - 12, 80, 24, "state", "grey", fs=12.5)
+    poly([(RC + 29, AY), (X1 - 40, AY), (X1 - 40, VY + CH + 9)])
 
 # ------------------------------------------------------------------ (b) training
 LBG, LBD, LTX = "#FFF1E4", PURPLE, "#7A3B0A"
@@ -184,9 +218,9 @@ def panel_b_v(ox, oy):          # columns, for the double-column figure (470 x 3
     legend(ox + 4, oy + 362)
 
 if MODE == "single":
-    W, H = 476, 600
+    W, H = 476, 586
     panel_a(4, 4)
-    panel_b_h(4, 404)
+    panel_b_h(4, 386)
 else:
     W, H = 980, 392
     panel_a(4, 4)
