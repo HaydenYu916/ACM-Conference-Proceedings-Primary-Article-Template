@@ -4,7 +4,9 @@
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{images/system-architecture.pdf}
-  \caption{System overview (primary $\pi_{0.5}$ configuration).
+  \caption{The robot uploads only an integer bitstream, and the cloud
+  recovers the policy's visual tokens without reconstructing an image or
+  running the policy's vision encoder (primary $\pi_{0.5}$ configuration).
   (a)~Deployment: on the robot, the light vision encoder and the feature
   codec of the jointly learned frontend turn camera images into an
   integer bitstream; on inter uploads the codec and the token decoder are
