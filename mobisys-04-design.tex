@@ -173,15 +173,15 @@ then convert the resulting integer symbols into a bitstream with rANS.
   neural decoder on the robot at every upload. (b) Conditioning on the
   previous quantized code $y_{t-1}$ only requires storing a copy of the
   code just sent, which the cloud also keeps. Blue marks the trained
-  transform $g_a$ and the non-neural steps after it, teal the stored code,
-  and red the extra neural decoder.}
+  transform $g_a$, white the non-neural steps, teal the stored code, and red
+  the extra neural decoder.}
   \Description{Two small top-to-bottom block diagrams of the robot side,
   side by side. In (a), a reference produced by a neural decoder is
   subtracted from the output of g_a before Q and rANS; the quantized output
   also feeds the decoder. In (b), g_a and Q produce a code; the previous
   code y_{t-1}, stored after Q, is fed back into g_a. The trained
-  transform g_a is shaded blue, Q and rANS are outlined in blue, the stored
-  code is teal, and the extra neural decoder in (a) is red.}
+  transform g_a is shaded blue, Q and rANS are white, the stored code is
+  teal, and the extra neural decoder in (a) is red.}
   \label{fig:temporal-reference}
 \end{figure}
 

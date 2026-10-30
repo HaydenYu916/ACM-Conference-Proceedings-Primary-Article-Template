@@ -69,9 +69,13 @@ def panel_a(ox, oy):
         out.append(f'<img src="data:image/jpeg;base64,{TH[c]}" style="position:absolute; left:{ox}px; top:{oy+28+k*29}px; '
                    f'width:27px; height:27px; border-radius:3px; box-shadow:0 0 0 1.2px #8F8A80; object-fit:cover">')
     # ---- edge card: s | (h -> Q -> rANS), with the stored code y_{t-1} looping from Q back to h
-    def mini(x, y, w, html, kind="ours"):
-        div(x, y, w, 16, f"background:#FFFFFF; border:1.3px solid {BLUE}; border-radius:4px")
-        text(x, y + 1, w, html, 11.5, NAVY, 700, "center")
+    def mini(x, y, w, html, kind="ours"):        # trained step: blue; fixed step: white with grey outline
+        if kind == "ours":
+            div(x, y, w, 16, f"background:#BFD8F5; border:1.3px solid {BLUE}; border-radius:4px")
+            text(x, y + 1, w, html, 11.5, NAVY, 700, "center")
+        else:
+            div(x, y, w, 16, "background:#FFFFFF; border:1.3px solid #6B7280; border-radius:4px")
+            text(x, y + 1, w, html, 11.5, "#2E3440", 700, "center")
     def buffer(cx, y):
         div(cx - 28, y, 56, 18, f"background:{TEAL[0]}; border:1.4px solid {TEAL[1]}; border-radius:4px")
         text(cx - 28, y + 1, 56, "<i>y</i><sub><i>t</i>&minus;1</sub>", 12, TEAL[2], 700, "center")
@@ -85,7 +89,7 @@ def panel_a(ox, oy):
     cells((X0 + 10 + SP) / 2, IY + 21, 7, 13, 11)
     text(SP, IY + 1, X1 - 10 - SP, "Feature codec", 13, NAVY, 700, "center")
     hx, qx, rx = SP + 10, SP + 42, SP + 74            # left edges of h, Q, rANS
-    mini(hx, IY + 19, 22, "<i>h</i>"); mini(qx, IY + 19, 22, "<i>Q</i>"); mini(rx, IY + 19, 40, "rANS")
+    mini(hx, IY + 19, 22, "<i>h</i>"); mini(qx, IY + 19, 22, "<i>Q</i>", "fixed"); mini(rx, IY + 19, 40, "rANS", "fixed")
     poly([(hx + 22, IY + 27), (qx - 1, IY + 27)]); poly([(qx + 22, IY + 27), (rx - 1, IY + 27)])
     BY = IY + IHH + 10
     buffer((hx + qx + 22) / 2, BY)
