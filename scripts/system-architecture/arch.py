@@ -69,13 +69,13 @@ def panel_a(ox, oy):
         out.append(f'<img src="data:image/jpeg;base64,{TH[c]}" style="position:absolute; left:{ox}px; top:{oy+28+k*29}px; '
                    f'width:27px; height:27px; border-radius:3px; box-shadow:0 0 0 1.2px #8F8A80; object-fit:cover">')
     # ---- edge card: s | (h -> Q -> rANS), with the stored code y_{t-1} looping from Q back to h
-    def mini(x, y, w, html, kind="ours"):        # trained step: blue; fixed step: white with grey outline
+    def mini(x, y, w, html, kind="ours"):        # trained step: blue; fixed (non-learned) step: yellow
         if kind == "ours":
             div(x, y, w, 16, f"background:#BFD8F5; border:1.3px solid {BLUE}; border-radius:4px")
             text(x, y + 1, w, html, 11.5, NAVY, 700, "center")
         else:
-            div(x, y, w, 16, "background:#FFFFFF; border:1.3px solid #6B7280; border-radius:4px")
-            text(x, y + 1, w, html, 11.5, "#2E3440", 700, "center")
+            div(x, y, w, 16, "background:#FFF3C4; border:1.3px solid #C9A227; border-radius:4px")
+            text(x, y + 1, w, html, 11.5, "#4F3D05", 700, "center")
     def buffer(cx, y):
         div(cx - 28, y, 56, 18, f"background:{TEAL[0]}; border:1.4px solid {TEAL[1]}; border-radius:4px")
         text(cx - 28, y + 1, 56, "<i>y</i><sub><i>t</i>&minus;1</sub>", 12, TEAL[2], 700, "center")
@@ -117,7 +117,7 @@ def panel_a(ox, oy):
     card(X0, TY, X1 - X0, CHB, "Token decoder", fs=14.5)
     TIY = TY + 25
     strip(X0 + 10, TIY, X1 - X0 - 20, TSP)
-    text(X0 + 10, TIY + 2, TSP - X0 - 10, "rANS decode", 13, NAVY, 700, "center")
+    mini((X0 + 10 + TSP) / 2 - 42, TIY + 3, 84, "rANS decode", "fixed")
     cells((X0 + 10 + TSP) / 2, TIY + 23, 4, 7, 7)
     text(TSP, TIY + 2, X1 - 10 - TSP, "Synthesis <i>g<sub>s</sub></i> <span style=\"font-weight:600; color:#3F5E86\">(+ state)</span>", 13, NAVY, 700, "center")
     cells((TSP + X1 - 10) / 2, TIY + 21, 7, 12, 11)
